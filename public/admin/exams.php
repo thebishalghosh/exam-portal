@@ -15,7 +15,7 @@ $exams = getAllExams($conn);
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1 class="mt-4">Manage Exams</h1>
-        <p>Create, view, and manage exams for students.</p>
+        <p class="text-muted mb-0">Create, preview, and manage exams for your candidates.</p>
     </div>
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExamModal" style="background-color: var(--primary-green); border-color: var(--primary-green);">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg me-1" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/></svg>
@@ -31,7 +31,7 @@ $exams = getAllExams($conn);
     <div class="card-body">
         <table class="table table-striped table-hover">
             <thead>
-                <tr>
+                <tr class="align-middle">
                     <th scope="col">Title</th>
                     <th scope="col">Duration</th>
                     <th scope="col">Status</th>
@@ -42,7 +42,14 @@ $exams = getAllExams($conn);
                 <?php if ($exams && mysqli_num_rows($exams) > 0): ?>
                     <?php while($exam = mysqli_fetch_assoc($exams)): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($exam['title']); ?></td>
+                            <td>
+                                <div class="fw-semibold"><?php echo htmlspecialchars($exam['title']); ?></div>
+                                <?php if (!empty($exam['description'])): ?>
+                                    <div class="small text-muted text-truncate" style="max-width: 320px;">
+                                        <?php echo htmlspecialchars($exam['description']); ?>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
                             <td><?php echo $exam['duration']; ?> mins</td>
                             <td>
                                 <?php if ($exam['status'] == 'active'): ?>
@@ -51,8 +58,8 @@ $exams = getAllExams($conn);
                                     <span class="badge bg-secondary">Inactive</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-info view-exam-btn"
+                            <td class="text-nowrap">
+                                <button type="button" class="btn btn-sm btn-outline-secondary view-exam-btn"
                                         data-bs-toggle="modal" data-bs-target="#viewExamModal"
                                         data-title="<?php echo htmlspecialchars($exam['title']); ?>"
                                         data-description="<?php echo htmlspecialchars($exam['description']); ?>"
@@ -60,7 +67,7 @@ $exams = getAllExams($conn);
                                         data-start="<?php echo date('F j, Y, g:i a', strtotime($exam['start_time'])); ?>"
                                         data-end="<?php echo date('F j, Y, g:i a', strtotime($exam['end_time'])); ?>"
                                         data-status="<?php echo ucfirst($exam['status']); ?>">
-                                    View
+                                    View exam
                                 </button>
                                 <a href="<?php echo BASE_URL; ?>/admin/exam/questions/<?php echo $exam['exam_id']; ?>" class="btn btn-sm btn-primary" style="background-color: var(--primary-green); border-color: var(--primary-green);">Manage Questions</a>
                             </td>
@@ -129,17 +136,26 @@ $exams = getAllExams($conn);
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <h3 id="modal-title"></h3>
-                <p id="modal-description"></p>
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>Duration:</strong> <span id="modal-duration"></span> minutes</p>
-                        <p><strong>Status:</strong> <span id="modal-status"></span></p>
+                <div class="exam-preview-card">
+                    <div class="exam-preview-header">
+                        <div>
+                            <h3 id="modal-title" class="mb-1"></h3>
+                            <p id="modal-description" class="mb-0 text-muted small"></p>
+                        </div>
+                        <span id="modal-status" class="badge"></span>
                     </div>
-                    <div class="col-md-6">
-                        <p><strong>Start Time:</strong> <span id="modal-start"></span></p>
-                        <p><strong>End Time:</strong> <span id="modal-end"></span></p>
+                    <div class="exam-preview-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted small">Duration</p>
+                                <p class="mb-3 fw-semibold"><span id="modal-duration"></span> minutes</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1 text-muted small">Window</p>
+                                <p class="mb-1"><span id="modal-start"></span></p>
+                                <p class="mb-0"><span id="modal-end"></span></p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -180,7 +196,14 @@ document.addEventListener('DOMContentLoaded', function () {
             modalDuration.textContent = duration;
             modalStart.textContent = start;
             modalEnd.textContent = end;
+            // Reset and set status badge styling
             modalStatus.textContent = status;
+            modalStatus.classList.remove('bg-success', 'bg-secondary', 'bg-warning', 'text-dark');
+            if (status.toLowerCase() === 'active') {
+                modalStatus.classList.add('bg-success');
+            } else {
+                modalStatus.classList.add('bg-secondary');
+            }
         });
     }
 });

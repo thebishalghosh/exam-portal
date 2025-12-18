@@ -15,7 +15,6 @@ Theme: Light Green Modern - Classy Sidebar
 
 body {
     background-color: var(--light-gray);
-    font-family: 'Roboto', sans-serif; /* Google Forms uses Roboto */
 }
 
 #wrapper {
@@ -112,6 +111,12 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     margin: 0 auto;
     padding-bottom: 50px;
     position: relative;
+}
+
+/* Use Google Forms–style font only inside the questions area so the sidebar keeps its own font */
+.questions-wrapper,
+.questions-wrapper * {
+    font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* Title Card */
@@ -215,6 +220,34 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     border-radius: 4px;
     border: 1px solid #dadce0;
     min-height: 70px;
+}
+
+/* Exam preview (View Exam modal) */
+.exam-preview-card {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+    overflow: hidden;
+}
+
+.exam-preview-header {
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.exam-preview-header h3 {
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.exam-preview-body {
+    padding: 16px 20px 18px;
 }
 
 /* Floating Sidebar */
