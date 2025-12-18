@@ -5,17 +5,17 @@ Theme: Light Green Modern - Classy Sidebar
 :root {
     --primary-green: #4CAF50;
     --dark-green: #388E3C;
-    --light-green-bg: #e8f5e9; /* Slightly different light green */
+    --light-green-bg: #e8f5e9;
     --white: #fff;
-    --light-gray: #f8f9fa;
-    --text-dark: #343a40;
-    --text-muted: #6c757d;
-    --border-color: #e0e0e0;
+    --light-gray: #f0f2f5; /* Google Forms background is slightly darker/grayer */
+    --text-dark: #202124;
+    --text-muted: #5f6368;
+    --border-color: #dadce0;
 }
 
 body {
     background-color: var(--light-gray);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Roboto', sans-serif; /* Google Forms uses Roboto */
 }
 
 #wrapper {
@@ -53,8 +53,8 @@ body {
     padding: 0.9rem 1rem;
     color: var(--text-dark);
     font-weight: 500;
-    border-radius: 8px; /* Rounded corners for items */
-    margin-bottom: 0.25rem; /* Space between items */
+    border-radius: 8px;
+    margin-bottom: 0.25rem;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -63,7 +63,6 @@ body {
     transition: opacity 0.2s ease;
 }
 
-/* Sidebar link hover/active state */
 #sidebar-wrapper .list-group-item:hover,
 #sidebar-wrapper .list-group-item.active {
     background-color: var(--light-green-bg);
@@ -98,7 +97,7 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     justify-content: center;
     width: 40px;
     height: 40px;
-    border-radius: 10px; /* Softer corners */
+    border-radius: 10px;
 }
 
 #sidebarToggle:hover {
@@ -106,7 +105,188 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     border-color: var(--dark-green);
 }
 
-/* --- Responsive --- */
+/* --- Google Forms Style UI --- */
+
+.questions-wrapper {
+    max-width: 770px;
+    margin: 0 auto;
+    padding-bottom: 50px;
+    position: relative;
+}
+
+/* Title Card */
+.form-title-card {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    border-top: 10px solid var(--primary-green); /* The colored top bar */
+    padding: 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+}
+
+.form-title-card h1 {
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+}
+
+/* Question Card */
+.question-card {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
+.question-card:hover {
+    box-shadow: 0 3px 4px 0 rgba(60,64,67,0.3), 0 3px 6px 2px rgba(60,64,67,0.15);
+}
+
+.question-card.active {
+    border-left: 6px solid #4285f4; /* Blue active border like Google */
+    box-shadow: 0 4px 6px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+}
+
+.question-text-display {
+    font-size: 16px;
+    color: var(--text-dark);
+    margin-bottom: 15px;
+}
+
+.question-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.question-meta span:last-child {
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.question-index-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    background-color: #f1f3f4;
+}
+
+.question-card .marks-badge {
+    background-color: #e8f0fe !important;
+    color: #1967d2 !important;
+    font-weight: 500;
+}
+
+.question-options {
+    margin-top: 4px;
+    padding-left: 32px;
+}
+
+.question-options .form-check {
+    margin-bottom: 4px;
+}
+
+.question-options .form-check-label {
+    font-size: 14px;
+    color: var(--text-dark);
+}
+
+.question-descriptive-preview {
+    margin-top: 4px;
+    font-size: 14px;
+    resize: none;
+    background-color: #f1f3f4;
+    border-radius: 4px;
+    border: 1px solid #dadce0;
+    min-height: 70px;
+}
+
+/* Floating Sidebar */
+.floating-menu {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 2px 6px 2px rgba(60,64,67,0.15);
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 100;
+}
+
+@media (min-width: 1200px) {
+    .floating-menu {
+        position: absolute;
+        top: 0;
+        right: -60px;
+        bottom: auto;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .floating-menu .btn-floating {
+        box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+    }
+}
+
+.btn-floating {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--white);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-decoration: none;
+}
+
+.btn-floating:hover {
+    background: #f1f3f4;
+    color: var(--text-dark);
+}
+
+/* Form Styling inside Card */
+.question-input {
+    background-color: #f1f3f4;
+    border: none;
+    border-bottom: 1px solid var(--text-muted);
+    border-radius: 4px 4px 0 0;
+    padding: 16px;
+    font-size: 16px;
+    width: 100%;
+    margin-bottom: 20px;
+    transition: 0.2s;
+}
+
+.question-input:focus {
+    background-color: #e8f0fe;
+    border-bottom: 2px solid var(--primary-green);
+    outline: none;
+}
+
+/* Responsive */
 @media (min-width: 768px) {
     #sidebar-wrapper {
         margin-left: 0;

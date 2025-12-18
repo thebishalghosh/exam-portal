@@ -26,91 +26,69 @@ require_once ROOT_PATH . '/app/views/partials/admin_header.php';
 require_once ROOT_PATH . '/app/views/partials/admin_sidebar.php';
 ?>
 
-<!-- Breadcrumb Navigation -->
-<nav aria-label="breadcrumb" class="mt-4">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>/admin/dashboard">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="<?php echo BASE_URL; ?>/admin/exams">Exams</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Manage Questions</li>
-    </ol>
-</nav>
+<!-- Add Google Fonts for Roboto -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
-<h1 class="mt-2">Manage Questions for "<?php echo htmlspecialchars($exam['title']); ?>"</h1>
-<p>Add, view, and manage questions for this exam.</p>
+<div class="questions-wrapper">
+    <!-- Floating Action Menu -->
+    <div class="floating-menu">
+        <button class="btn-floating" id="add-question-btn" title="Add New Question">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/>
+            </svg>
+        </button>
+    </div>
 
-<!-- Add Question Form -->
-<div class="card mb-4">
-    <div class="card-header">
-        Add New Question
+    <!-- Exam Title Card -->
+    <div class="form-title-card">
+        <h1><?php echo htmlspecialchars($exam['title']); ?></h1>
+        <p class="lead">Click on a question to edit, or use the '+' button to add a new one.</p>
     </div>
-    <div class="card-body">
-        <form action="<?php echo BASE_URL; ?>/admin/question/create" method="POST">
-            <input type="hidden" name="exam_id" value="<?php echo $exam_id; ?>">
-            <div class="mb-3">
-                <label for="question_text" class="form-label">Question Text</label>
-                <textarea class="form-control" id="question_text" name="question_text" rows="3" required></textarea>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="type" class="form-label">Question Type</label>
-                    <select class="form-select" id="type" name="type" required>
-                        <option value="mcq">Multiple Choice (MCQ)</option>
-                        <option value="descriptive">Descriptive</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="marks" class="form-label">Marks</label>
-                    <input type="number" class="form-control" id="marks" name="marks" value="1" required>
-                </div>
-            </div>
-            <div id="mcq_options_container">
-                <label class="form-label">MCQ Options</label>
-                <div class="input-group mb-2"><span class="input-group-text">A</span><input type="text" class="form-control" name="options[A]" placeholder="Option A"></div>
-                <div class="input-group mb-2"><span class="input-group-text">B</span><input type="text" class="form-control" name="options[B]" placeholder="Option B"></div>
-                <div class="input-group mb-2"><span class="input-group-text">C</span><input type="text" class="form-control" name="options[C]" placeholder="Option C"></div>
-                <div class="input-group mb-3"><span class="input-group-text">D</span><input type="text" class="form-control" name="options[D]" placeholder="Option D"></div>
-                <div class="mb-3">
-                    <label for="correct_answer" class="form-label">Correct Answer (for MCQ)</label>
-                    <select class="form-select" id="correct_answer" name="correct_answer"><option value="">Select Correct Option</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>
-                </div>
-            </div>
-            <button type="submit" name="create_question" class="btn btn-primary" style="background-color: var(--primary-green); border-color: var(--primary-green);">Add Question</button>
-        </form>
-    </div>
-</div>
 
-<!-- Existing Questions List -->
-<div class="card">
-    <div class="card-header">
-        Existing Questions
-    </div>
-    <div class="card-body">
+    <!-- Questions Container -->
+    <div id="questions-container" data-exam-id="<?php echo $exam_id; ?>">
         <?php if ($questions && mysqli_num_rows($questions) > 0): ?>
-            <ul class="list-group list-group-flush">
-                <?php while($question = mysqli_fetch_assoc($questions)): ?>
-                    <li class="list-group-item px-0">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1"><?php echo htmlspecialchars($question['question_text']); ?></h5>
-                            <small><?php echo $question['marks']; ?> Mark(s)</small>
+            <?php $qIndex = 1; ?>
+            <?php while($question = mysqli_fetch_assoc($questions)): ?>
+                <div class="question-card" data-question-id="<?php echo $question['question_id']; ?>">
+                    <div class="view-mode">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <div class="question-meta">
+                                    <span class="question-index-badge"><?php echo $qIndex; ?></span>
+                                    <span>
+                                        <?php echo strtoupper($question['type'] === 'mcq' ? 'Multiple choice' : 'Descriptive'); ?>
+                                    </span>
+                                </div>
+                                <p class="question-text-display mb-1"><?php echo htmlspecialchars($question['question_text']); ?></p>
+                            </div>
+                            <span class="badge rounded-pill marks-badge"><?php echo $question['marks']; ?> Mark(s)</span>
                         </div>
-                        <p class="mb-1"><strong>Type:</strong> <?php echo ucfirst($question['type']); ?></p>
+
                         <?php if ($question['type'] === 'mcq' && $question['options']): ?>
                             <?php $options = json_decode($question['options'], true); ?>
-                            <div class="mt-2">
+                            <div class="question-options">
                                 <?php foreach($options as $key => $value): ?>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" disabled <?php if($key == $question['correct_answer']) echo 'checked'; ?>>
-                                        <label class="form-check-label <?php if($key == $question['correct_answer']) echo 'fw-bold text-success'; ?>"><?php echo htmlspecialchars($value); ?></label>
+                                        <label class="form-check-label <?php if($key == $question['correct_answer']) echo 'fw-bold text-success'; ?>">
+                                            <?php echo htmlspecialchars($value); ?>
+                                        </label>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
+                        <?php else: ?>
+                            <textarea class="form-control form-control-sm question-descriptive-preview" disabled placeholder="Answer text"></textarea>
                         <?php endif; ?>
-                        <div class="mt-3"><a href="#" class="btn btn-sm btn-warning">Edit</a><a href="#" class="btn btn-sm btn-danger">Delete</a></div>
-                    </li>
-                <?php endwhile; ?>
-            </ul>
-        <?php else: ?>
-            <p class="text-center">No questions added yet.</p>
+                    </div>
+                    <div class="edit-mode" style="display: none;">
+                        <!-- The edit form will be dynamically inserted here by JavaScript -->
+                    </div>
+                </div>
+                <?php $qIndex++; ?>
+            <?php endwhile; ?>
         <?php endif; ?>
     </div>
 </div>
@@ -121,13 +99,132 @@ require_once ROOT_PATH . '/app/views/partials/admin_footer.php';
 ?>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const typeSelect = document.getElementById('type');
-    const mcqOptionsContainer = document.getElementById('mcq_options_container');
-    function toggleMcqOptions() {
-        mcqOptionsContainer.style.display = (typeSelect.value === 'mcq') ? 'block' : 'none';
+// --- Google Forms–like interactions for managing questions ---
+(function () {
+    const questionsContainer = document.getElementById('questions-container');
+    const addQuestionBtn = document.getElementById('add-question-btn');
+    const examId = questionsContainer?.getAttribute('data-exam-id');
+
+    if (!questionsContainer || !addQuestionBtn || !examId) return;
+
+    // Highlight a card when clicked (similar to active state in Google Forms)
+    questionsContainer.addEventListener('click', function (e) {
+        const card = e.target.closest('.question-card');
+        if (!card) return;
+
+        document
+            .querySelectorAll('.question-card')
+            .forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+    });
+
+    // Create the HTML for a new editable question card
+    function createNewQuestionCard() {
+        // If there is already a "new" card, focus that instead of creating another
+        const existingNew = questionsContainer.querySelector('.question-card.new-question');
+        if (existingNew) {
+            existingNew.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'question-card active new-question';
+
+        // Build the edit form (posts to the existing QuestionController)
+        wrapper.innerHTML = `
+            <div class="edit-mode">
+                <form action="<?php echo BASE_URL; ?>/admin/question/create" method="POST">
+                    <input type="hidden" name="exam_id" value="${examId}">
+                    <input type="hidden" name="create_question" value="1">
+
+                    <input
+                        type="text"
+                        name="question_text"
+                        class="question-input"
+                        placeholder="Untitled question"
+                        required
+                    >
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small mb-1">Question type</label>
+                            <select name="type" class="form-select" id="question-type-select">
+                                <option value="mcq" selected>Multiple choice</option>
+                                <option value="descriptive">Short / long answer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-muted small mb-1">Marks</label>
+                            <input type="number" name="marks" class="form-control" value="1" min="1" required>
+                        </div>
+                    </div>
+
+                    <div id="mcq-options-block">
+                        <label class="form-label text-muted small mb-1 d-block">Options</label>
+
+                        ${[1, 2, 3, 4].map((n, idx) => `
+                            <div class="d-flex align-items-center mb-2 option-row">
+                                <div class="form-check me-2">
+                                    <input
+                                        class="form-check-input"
+                                        type="radio"
+                                        name="correct_answer"
+                                        value="${idx}"
+                                        ${idx === 0 ? 'checked' : ''}
+                                    >
+                                </div>
+                                <input
+                                    type="text"
+                                    name="options[${idx}]"
+                                    class="form-control"
+                                    placeholder="Option ${n}"
+                                    ${idx < 2 ? 'required' : ''}
+                                >
+                            </div>
+                        `).join('')}
+
+                        <p class="text-muted small mt-1 mb-0">
+                            Select the circle next to the correct answer. At least 2 options are required.
+                        </p>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4 gap-2">
+                        <button type="button" class="btn btn-light btn-sm" id="cancel-new-question">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success btn-sm" style="background-color: var(--primary-green); border-color: var(--primary-green);">
+                            Save question
+                        </button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        questionsContainer.insertBefore(wrapper, questionsContainer.firstChild);
+        wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Wire up type toggle and cancel within this new card
+        const typeSelect = wrapper.querySelector('#question-type-select');
+        const mcqBlock = wrapper.querySelector('#mcq-options-block');
+        const cancelBtn = wrapper.querySelector('#cancel-new-question');
+
+        if (typeSelect && mcqBlock) {
+            typeSelect.addEventListener('change', function () {
+                if (this.value === 'mcq') {
+                    mcqBlock.style.display = '';
+                } else {
+                    mcqBlock.style.display = 'none';
+                }
+            });
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function () {
+                wrapper.remove();
+            });
+        }
     }
-    toggleMcqOptions();
-    typeSelect.addEventListener('change', toggleMcqOptions);
-});
+
+    addQuestionBtn.addEventListener('click', createNewQuestionCard);
+})();
 </script>
