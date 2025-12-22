@@ -4,6 +4,7 @@ if (!defined('ROOT_PATH')) {
 }
 
 require_once ROOT_PATH . '/config/database.php';
+require_once ROOT_PATH . '/app/models/Exam.php'; // Now contains getExamTitleById
 require_once ROOT_PATH . '/app/models/Question.php';
 
 $exam_id = isset($_GET['exam_id']) ? (int)$_GET['exam_id'] : 0;
@@ -13,9 +14,10 @@ if ($exam_id === 0) {
     exit();
 }
 
-$exam = getExamById($conn, $exam_id);
+// Use the new, correct function to get only the title
+$exam_title = getExamTitleById($conn, $exam_id);
 
-if (!$exam) {
+if (!$exam_title) {
     header("Location: " . BASE_URL . "/admin/exams?error=notfound");
     exit();
 }
@@ -43,7 +45,7 @@ require_once ROOT_PATH . '/app/views/partials/admin_sidebar.php';
 
     <!-- Exam Title Card -->
     <div class="form-title-card">
-        <h1><?php echo htmlspecialchars($exam['title']); ?></h1>
+        <h1><?php echo htmlspecialchars($exam_title); ?></h1>
         <p class="lead">Click on a question to edit, or use the '+' button to add a new one.</p>
     </div>
 

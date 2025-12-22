@@ -113,18 +113,16 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     position: relative;
 }
 
-/* Use Google Forms–style font only inside the questions area so the sidebar keeps its own font */
 .questions-wrapper,
 .questions-wrapper * {
     font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* Title Card */
 .form-title-card {
     background: var(--white);
     border-radius: 8px;
     border: 1px solid var(--border-color);
-    border-top: 10px solid var(--primary-green); /* The colored top bar */
+    border-top: 10px solid var(--primary-green);
     padding: 24px;
     margin-bottom: 12px;
     box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
@@ -137,7 +135,6 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     margin-bottom: 10px;
 }
 
-/* Question Card */
 .question-card {
     background: var(--white);
     border-radius: 8px;
@@ -154,7 +151,7 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
 }
 
 .question-card.active {
-    border-left: 6px solid #4285f4; /* Blue active border like Google */
+    border-left: 6px solid #4285f4;
     box-shadow: 0 4px 6px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
 }
 
@@ -222,7 +219,6 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     min-height: 70px;
 }
 
-/* Exam preview (View Exam modal) */
 .exam-preview-card {
     background: var(--white);
     border-radius: 8px;
@@ -250,7 +246,6 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     padding: 16px 20px 18px;
 }
 
-/* Floating Sidebar */
 .floating-menu {
     position: fixed;
     bottom: 20px;
@@ -300,7 +295,6 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     color: var(--text-dark);
 }
 
-/* Form Styling inside Card */
 .question-input {
     background-color: #f1f3f4;
     border: none;

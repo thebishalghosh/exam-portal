@@ -27,8 +27,8 @@ function getAssignedExamsByEmail($conn, $email) {
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
         while ($row = mysqli_fetch_assoc($result)) {
-            // We can add the exam start link directly here
-            $row['start_link'] = BASE_URL . '/exam/' . $row['exam_id'];
+            // Dynamically add the candidate's email to the start link
+            $row['start_link'] = BASE_URL . '/exam/take/' . $row['exam_id'] . '?email=' . urlencode($email);
             $exams[] = $row;
         }
         mysqli_stmt_close($stmt);

@@ -39,7 +39,9 @@ $routes = [
     'logout'              => '/app/controllers/LogoutController.php',
     'admin/exam/create'   => '/app/controllers/ExamController.php',
     'admin/question/create' => '/app/controllers/QuestionController.php',
-    'admin/exam/save-assignment' => '/app/controllers/ExamAssignmentController.php', // New action route
+    'admin/exam/save-assignment' => '/app/controllers/ExamAssignmentController.php',
+    'api/submit-exam'     => '/app/controllers/SubmissionController.php',
+    'api/log-activity'    => '/app/controllers/LogController.php', // New route
 ];
 
 // Check static routes first
@@ -58,6 +60,12 @@ if (preg_match('#^admin/exam/questions/(\d+)$#', $url, $matches)) {
 if (preg_match('#^admin/exam/assign/(\d+)$#', $url, $matches)) {
     $_GET['exam_id'] = $matches[1];
     require_once ROOT_PATH . '/public/admin/assign_exam.php';
+    exit();
+}
+
+if (preg_match('#^exam/take/(\d+)$#', $url, $matches)) {
+    $_GET['exam_id'] = $matches[1];
+    require_once ROOT_PATH . '/public/exam/take.php';
     exit();
 }
 
