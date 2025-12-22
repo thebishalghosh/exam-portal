@@ -20,7 +20,6 @@ function getAllExams($conn) {
  */
 function getExamById($conn, $exam_id) {
     $exam_id = (int)$exam_id;
-    // Fetches all necessary details for the exam taking page
     $sql = "SELECT exam_id, title, duration FROM exams WHERE exam_id = ?";
 
     $stmt = mysqli_prepare($conn, $sql);
@@ -55,4 +54,38 @@ function getExamTitleById($conn, $exam_id) {
         return $exam ? $exam['title'] : null;
     }
     return null;
+}
+
+/**
+ * Fetches the total count of all exams.
+ * @param mysqli $conn The database connection object.
+ * @return int The total number of exams.
+ */
+function getTotalExamsCount($conn) {
+    $sql = "SELECT COUNT(exam_id) as total FROM exams";
+    $result = mysqli_query($conn, $sql);
+    $row = mysqli_fetch_assoc($result);
+    return $row ? (int)$row['total'] : 0;
+}
+
+/**
+ * Fetches the count of exams grouped by their status.
+ * @param mysqli $conn The database connection object.
+ * @return array An array formatted for Google Charts.
+ */
+function getExamStatusCounts($conn) {
+    $sql = "SELECT status, COUNT(exam_id) as count FROM exams GROUP BY status";
+    $result = mysqli_query($conn, $sql);
+
+    $status_counts = [['Status', 'Count']];
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $status_counts[] = [ucfirst($row['status']), (int)$row['count']];
+        }
+    }
+    // If there are no exams, add a default row to prevent chart errors
+    if (count($status_counts) === 1) {
+        $status_counts[] = ['None', 0];
+    }
+    return $status_counts;
 }

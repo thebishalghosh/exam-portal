@@ -7,13 +7,17 @@ if (!defined('BASE_URL')) {
     define('BASE_URL', getenv('APP_URL'));
 }
 
+session_start(); // Start the session to access logged-in user data
+
 require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/app/models/Exam.php';
 require_once ROOT_PATH . '/app/models/Question.php';
 require_once ROOT_PATH . '/app/models/ExamAssignment.php';
 
 $exam_id = isset($_GET['exam_id']) ? (int)$_GET['exam_id'] : 0;
-$candidate_email = isset($_GET['email']) ? trim($_GET['email']) : '';
+
+// --- Authorization: Use Session Data ---
+$candidate_email = isset($_SESSION['candidate_email']) ? $_SESSION['candidate_email'] : '';
 
 $is_authorized = false;
 if ($exam_id > 0 && !empty($candidate_email)) {
@@ -24,7 +28,12 @@ if ($exam_id > 0 && !empty($candidate_email)) {
 }
 
 if (!$is_authorized) {
-    die("Access Denied: You are not assigned to this exam, or the link is invalid.");
+    // If not logged in, redirect to login (or show error if logged in but not assigned)
+    if (empty($candidate_email)) {
+        die("Access Denied: Please log in via the HR Portal.");
+    } else {
+        die("Access Denied: You are not assigned to this exam.");
+    }
 }
 
 $exam = getExamById($conn, $exam_id);
@@ -661,7 +670,7 @@ body {
         <h1><?php echo htmlspecialchars($exam['title']); ?></h1>
         <p>Duration: <?php echo $exam['duration']; ?> minutes</p>
     </div>
-    
+
     <div class="pre-exam-content">
         <!-- Exam Rules Section -->
         <div class="exam-rules-section">
@@ -682,9 +691,9 @@ body {
         <div class="disclaimer-section">
             <h3>Important Disclaimer</h3>
             <p>
-                By proceeding with this exam, you acknowledge that any attempt to cheat, bypass security measures, 
-                or violate exam rules will result in immediate disqualification and automatic submission of your exam. 
-                The system monitors your activity, including webcam feed, tab switches, and suspicious behavior. 
+                By proceeding with this exam, you acknowledge that any attempt to cheat, bypass security measures,
+                or violate exam rules will result in immediate disqualification and automatic submission of your exam.
+                The system monitors your activity, including webcam feed, tab switches, and suspicious behavior.
                 All actions are logged and may be reviewed by exam administrators.
             </p>
         </div>
@@ -693,7 +702,7 @@ body {
         <div class="acknowledge-checkbox">
             <input type="checkbox" id="acknowledgeRules" required>
             <label for="acknowledgeRules">
-                I have read and understood all the <strong>Exam Rules & Guidelines</strong> and the <strong>Disclaimer</strong> above. 
+                I have read and understood all the <strong>Exam Rules & Guidelines</strong> and the <strong>Disclaimer</strong> above.
                 I agree to comply with all rules and understand the consequences of violating them.
             </label>
         </div>
@@ -814,7 +823,7 @@ function startExamTimer() {
     examTimer = setInterval(() => {
         remainingSeconds--;
         updateTimerDisplay();
-        
+
         if (remainingSeconds <= 0) {
             clearInterval(examTimer);
             log('Exam time expired — auto-submitting.', true);
@@ -831,8 +840,8 @@ function updateTimerDisplay() {
     const hours = Math.floor(remainingSeconds / 3600);
     const minutes = Math.floor((remainingSeconds % 3600) / 60);
     const seconds = remainingSeconds % 60;
-    
-    timerDisplay.textContent = 
+
+    timerDisplay.textContent =
         String(hours).padStart(2, '0') + ':' +
         String(minutes).padStart(2, '0') + ':' +
         String(seconds).padStart(2, '0');

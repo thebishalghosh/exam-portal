@@ -11,7 +11,6 @@ require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/app/models/Api.php';
 
 // --- Define BASE_URL ---
-// This is required because this script is accessed directly, bypassing index.php
 if (!defined('BASE_URL')) {
     define('BASE_URL', getenv('APP_URL'));
 }
@@ -29,6 +28,7 @@ if (!$apiKey || $sentApiKey !== $apiKey) {
 
 // --- Input Validation ---
 $email = $_GET['email'] ?? null;
+$session_token = $_GET['session_token'] ?? null; // Get the session token from the request
 
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400); // Bad Request
@@ -38,7 +38,8 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 // --- Fetch Data ---
 try {
-    $assignedExams = getAssignedExamsByEmail($conn, $email);
+    // Pass the session token to the model
+    $assignedExams = getAssignedExamsByEmail($conn, $email, $session_token);
 
     http_response_code(200); // OK
     echo json_encode([

@@ -32,6 +32,7 @@ if ($url === '') {
 // Static routes map
 $routes = [
     'login'               => '/public/login.php',
+    'login/sso'           => '/app/controllers/SSOController.php', // New SSO route
     'admin/dashboard'     => '/public/admin/dashboard.php',
     'admin/exams'         => '/public/admin/exams.php',
     'admin/candidates'    => '/public/admin/candidates.php',
@@ -41,7 +42,7 @@ $routes = [
     'admin/question/create' => '/app/controllers/QuestionController.php',
     'admin/exam/save-assignment' => '/app/controllers/ExamAssignmentController.php',
     'api/submit-exam'     => '/app/controllers/SubmissionController.php',
-    'api/log-activity'    => '/app/controllers/LogController.php', // New route
+    'api/log-activity'    => '/app/controllers/LogController.php',
 ];
 
 // Check static routes first
