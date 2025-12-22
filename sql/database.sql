@@ -34,7 +34,6 @@ CREATE TABLE exams (
                        duration INT NOT NULL,                       -- duration in minutes
                        start_time DATETIME NOT NULL,
                        end_time DATETIME NOT NULL,
-                       allowed_students JSON DEFAULT NULL,          -- ["email1","email2"] or null for ALL
                        status ENUM('active','inactive') DEFAULT 'active',
                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -83,4 +82,20 @@ CREATE TABLE activity_logs (
 
                                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                                FOREIGN KEY (exam_id) REFERENCES exams(exam_id) ON DELETE CASCADE
+);
+
+-- --------------------------------------------
+CREATE TABLE exam_assignments (
+                                  assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+                                  exam_id INT NOT NULL,
+                                  candidate_id INT NOT NULL,  -- Added this column
+                                  candidate_email VARCHAR(150) NOT NULL,
+                                  candidate_source ENUM('internal', 'interview') NOT NULL,
+                                  status ENUM('assigned', 'started', 'completed', 'disqualified') DEFAULT 'assigned',
+                                  score DECIMAL(5, 2) NULL,
+                                  assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+                                  FOREIGN KEY (exam_id) REFERENCES exams(exam_id) ON DELETE CASCADE,
+    -- We add a unique constraint to prevent assigning the same exam to the same person twice
+                                  UNIQUE KEY unique_assignment (exam_id, candidate_email)
 );

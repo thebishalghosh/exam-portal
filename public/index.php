@@ -6,7 +6,6 @@ define('ROOT_PATH', dirname(__DIR__));
 require_once ROOT_PATH . '/config/app.php';
 
 // --- Environment & Debugging ---
-// Set error reporting based on the APP_DEBUG value in .env
 if (getenv('APP_DEBUG') === 'true') {
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
@@ -18,7 +17,6 @@ if (getenv('APP_DEBUG') === 'true') {
 }
 
 // --- Base URL ---
-// Define the base URL from the .env file
 define('BASE_URL', getenv('APP_URL'));
 
 // Get the requested URL
@@ -41,6 +39,7 @@ $routes = [
     'logout'              => '/app/controllers/LogoutController.php',
     'admin/exam/create'   => '/app/controllers/ExamController.php',
     'admin/question/create' => '/app/controllers/QuestionController.php',
+    'admin/exam/save-assignment' => '/app/controllers/ExamAssignmentController.php', // New action route
 ];
 
 // Check static routes first
@@ -53,6 +52,12 @@ if (array_key_exists($url, $routes)) {
 if (preg_match('#^admin/exam/questions/(\d+)$#', $url, $matches)) {
     $_GET['exam_id'] = $matches[1];
     require_once ROOT_PATH . '/public/admin/questions.php';
+    exit();
+}
+
+if (preg_match('#^admin/exam/assign/(\d+)$#', $url, $matches)) {
+    $_GET['exam_id'] = $matches[1];
+    require_once ROOT_PATH . '/public/admin/assign_exam.php';
     exit();
 }
 

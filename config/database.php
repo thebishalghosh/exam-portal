@@ -1,11 +1,14 @@
 <?php
 // This file connects to the database using credentials from the .env file.
 
-// Ensure environment variables are loaded (should be done by index.php)
+// Ensure environment variables are loaded
 if (!getenv('DB_SERVERNAME')) {
-    // This can happen if the file is accessed directly or .env is not loaded
     die("Database configuration is not loaded. Please check your .env file and config/app.php.");
 }
+
+// --- Enable mysqli error reporting ---
+// This is the crucial line. It tells mysqli to throw exceptions on errors.
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 $servername = getenv('DB_SERVERNAME');
 $username = getenv('DB_USERNAME');
@@ -17,6 +20,5 @@ $conn = mysqli_connect($servername, $username, $password, $dbname);
 
 // Check connection
 if (!$conn) {
-    // Use mysqli_connect_error() to get the specific error message
     die("Connection failed: " . mysqli_connect_error());
 }
