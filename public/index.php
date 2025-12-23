@@ -32,15 +32,17 @@ if ($url === '') {
 // Static routes map
 $routes = [
     'login'               => '/public/login.php',
-    'login/sso'           => '/app/controllers/SSOController.php', // New SSO route
+    'login/sso'           => '/app/controllers/SSOController.php',
     'admin/dashboard'     => '/public/admin/dashboard.php',
     'admin/exams'         => '/public/admin/exams.php',
     'admin/candidates'    => '/public/admin/candidates.php',
+    'admin/submissions'   => '/public/admin/submissions.php',
     'login/process'       => '/app/controllers/LoginController.php',
     'logout'              => '/app/controllers/LogoutController.php',
     'admin/exam/create'   => '/app/controllers/ExamController.php',
     'admin/question/create' => '/app/controllers/QuestionController.php',
     'admin/exam/save-assignment' => '/app/controllers/ExamAssignmentController.php',
+    'admin/submission/save-grade' => '/app/controllers/SubmissionController.php', // New route for saving grades
     'api/submit-exam'     => '/app/controllers/SubmissionController.php',
     'api/log-activity'    => '/app/controllers/LogController.php',
 ];
@@ -67,6 +69,12 @@ if (preg_match('#^admin/exam/assign/(\d+)$#', $url, $matches)) {
 if (preg_match('#^exam/take/(\d+)$#', $url, $matches)) {
     $_GET['exam_id'] = $matches[1];
     require_once ROOT_PATH . '/public/exam/take.php';
+    exit();
+}
+
+if (preg_match('#^admin/submission/view/(\d+)$#', $url, $matches)) {
+    $_GET['submission_id'] = $matches[1];
+    require_once ROOT_PATH . '/public/admin/view_submission.php';
     exit();
 }
 

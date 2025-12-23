@@ -99,3 +99,5 @@ CREATE TABLE exam_assignments (
     -- We add a unique constraint to prevent assigning the same exam to the same person twice
                                   UNIQUE KEY unique_assignment (exam_id, candidate_email)
 );
+
+ALTER TABLE submissions ADD COLUMN marks_breakdown JSON DEFAULT NULL AFTER submitted_answers;

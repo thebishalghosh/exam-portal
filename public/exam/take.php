@@ -7,17 +7,24 @@ if (!defined('BASE_URL')) {
     define('BASE_URL', getenv('APP_URL'));
 }
 
-session_start(); // Start the session to access logged-in user data
+session_start(); // Ensure session is started
 
 require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/app/models/Exam.php';
 require_once ROOT_PATH . '/app/models/Question.php';
 require_once ROOT_PATH . '/app/models/ExamAssignment.php';
+require_once ROOT_PATH . '/app/models/Submission.php';
 
 $exam_id = isset($_GET['exam_id']) ? (int)$_GET['exam_id'] : 0;
-
-// --- Authorization: Use Session Data ---
 $candidate_email = isset($_SESSION['candidate_email']) ? $_SESSION['candidate_email'] : '';
+
+// --- DEBUGGING BLOCK (Remove after fixing) ---
+// echo "<h3>Debug Info</h3>";
+// echo "Exam ID: " . $exam_id . "<br>";
+// echo "Session Email: '" . $candidate_email . "'<br>";
+// $assigned_emails = getAssignedEmailsByExamId($conn, $exam_id);
+// echo "Assigned Emails in DB: <pre>" . print_r($assigned_emails, true) . "</pre>";
+// ---------------------------------------------
 
 $is_authorized = false;
 if ($exam_id > 0 && !empty($candidate_email)) {
@@ -28,12 +35,133 @@ if ($exam_id > 0 && !empty($candidate_email)) {
 }
 
 if (!$is_authorized) {
-    // If not logged in, redirect to login (or show error if logged in but not assigned)
-    if (empty($candidate_email)) {
-        die("Access Denied: Please log in via the HR Portal.");
-    } else {
-        die("Access Denied: You are not assigned to this exam.");
+    // If not logged in via session, check if email is passed in URL (Fallback for testing/direct link)
+    // This is less secure but helps if SSO failed to set session
+    $url_email = isset($_GET['email']) ? trim($_GET['email']) : '';
+    if (!empty($url_email)) {
+        $assigned_emails = getAssignedEmailsByExamId($conn, $exam_id);
+        if (in_array($url_email, $assigned_emails)) {
+            // Auto-login for this request since URL email is valid and assigned
+            $candidate_email = $url_email;
+            $is_authorized = true;
+        }
     }
+}
+
+if (!$is_authorized) {
+    die("Access Denied: You are not assigned to this exam, or the link is invalid.");
+}
+
+// NEW: Check if the candidate has already submitted this exam
+$user_id = 0;
+$sql_check_user = "SELECT id FROM users WHERE email = ?";
+$stmt_check_user = mysqli_prepare($conn, $sql_check_user);
+mysqli_stmt_bind_param($stmt_check_user, "s", $candidate_email);
+mysqli_stmt_execute($stmt_check_user);
+$result_check_user = mysqli_stmt_get_result($stmt_check_user);
+if ($row = mysqli_fetch_assoc($result_check_user)) {
+    $user_id = $row['id'];
+}
+mysqli_stmt_close($stmt_check_user);
+
+if ($user_id > 0 && submissionExists($conn, $exam_id, $user_id)) {
+    // Candidate has already submitted; prevent access
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied — Secure Exam</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+    :root {
+        --primary-green: #4CAF50;
+        --dark-green: #388E3C;
+        --light-green-bg: #e8f5e9;
+        --white: #fff;
+        --light-gray: #f0f2f5;
+        --text-dark: #202124;
+        --text-muted: #5f6368;
+        --border-color: #dadce0;
+        --danger-red: #d33;
+        --warning-orange: #f57c00;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Roboto', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: var(--light-gray);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .access-denied-screen {
+        max-width: 500px;
+        margin: 40px auto;
+        padding: 0;
+        background: var(--white);
+        border-radius: 8px;
+        box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+        overflow: hidden;
+        text-align: center;
+    }
+
+    .access-denied-header {
+        background: linear-gradient(135deg, var(--danger-red) 0%, #c0392b 100%);
+        color: white;
+        padding: 32px 40px;
+    }
+
+    .access-denied-header h1 {
+        font-size: 28px;
+        font-weight: 400;
+        margin: 0 0 8px 0;
+        color: white;
+    }
+
+    .access-denied-header p {
+        font-size: 14px;
+        margin: 0;
+        opacity: 0.95;
+    }
+
+    .access-denied-content {
+        padding: 40px;
+    }
+
+    .access-denied-content p {
+        font-size: 16px;
+        color: var(--text-dark);
+        margin: 0 0 20px 0;
+    }
+
+    
+    </style>
+    </head>
+    <body>
+    <div class="access-denied-screen">
+        <div class="access-denied-header">
+            <h1>Access Denied</h1>
+            <p>Exam Submission Portal</p>
+        </div>
+        <div class="access-denied-content">
+            <p>You have already submitted this exam. Multiple attempts are not allowed.</p>
+        </div>
+    </div>
+    </body>
+    </html>
+    <?php
+    exit();
 }
 
 $exam = getExamById($conn, $exam_id);
