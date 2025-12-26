@@ -8,7 +8,7 @@ session_start();
 require_once ROOT_PATH . '/config/database.php';
 
 // Handle the login form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'])) {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
@@ -29,10 +29,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
         if ($admin && password_verify($password, $admin['password'])) {
             $_SESSION['admin_id'] = $admin['admin_id'];
             $_SESSION['admin_username'] = $admin['username'];
+            $_SESSION['admin_logged_in'] = true; // Set the login flag
             header("Location: " . BASE_URL . "/admin/dashboard");
             exit();
         } else {
-            header("Location: " . BASE_URL . "/login?error=invalidcredentials");
+            header("Location: " . BASE_URL . "/login?error=invalid_credentials");
             exit();
         }
         mysqli_stmt_close($stmt);
