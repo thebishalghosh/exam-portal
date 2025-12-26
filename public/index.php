@@ -67,6 +67,7 @@ $routes = [
     'api/upload-snapshot' => '/app/controllers/SnapshotController.php',
     'admin/image/view'    => '/app/controllers/ImageController.php',
     'api/search-exams'    => '/app/controllers/SearchController.php',
+    'api/candidate-exams' => '/public/api/candidate-exams.php', // Added missing route
 ];
 
 // Check static routes first
@@ -90,7 +91,7 @@ if (preg_match('#^admin/exam/assign/(\d+)$#', $url, $matches)) {
 
 if (preg_match('#^exam/take/(\d+)$#', $url, $matches)) {
     $_GET['exam_id'] = $matches[1];
-    require_once ROOT_PATH . '/public/admin/exam/take.php'; // Corrected path
+    require_once ROOT_PATH . '/public/exam/take.php';
     exit();
 }
 
