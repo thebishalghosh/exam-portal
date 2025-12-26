@@ -19,9 +19,25 @@ if (getenv('APP_DEBUG') === 'true') {
 // --- Base URL ---
 define('BASE_URL', getenv('APP_URL'));
 
-// Get the requested URL
-$url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : '';
+// --- Robust URL Parsing ---
+// Get the full request URI
+$request_uri = $_SERVER['REQUEST_URI'];
+
+// Get the path component of the base URL (e.g., '/exam' on localhost)
+$base_path = parse_url(BASE_URL, PHP_URL_PATH);
+
+// Calculate the relative URL by removing the base path
+if ($base_path && strpos($request_uri, $base_path) === 0) {
+    $url = substr($request_uri, strlen($base_path));
+} else {
+    $url = $request_uri;
+}
+
+// Remove query string and leading/trailing slashes
+$url = strtok($url, '?');
+$url = trim($url, '/');
 $url = filter_var($url, FILTER_SANITIZE_URL);
+
 
 // Redirect to login if the URL is empty
 if ($url === '') {
@@ -50,7 +66,7 @@ $routes = [
     'api/log-activity'    => '/app/controllers/LogController.php',
     'api/upload-snapshot' => '/app/controllers/SnapshotController.php',
     'admin/image/view'    => '/app/controllers/ImageController.php',
-    'api/search-exams'    => '/app/controllers/SearchController.php', // New route
+    'api/search-exams'    => '/app/controllers/SearchController.php',
 ];
 
 // Check static routes first
@@ -74,7 +90,7 @@ if (preg_match('#^admin/exam/assign/(\d+)$#', $url, $matches)) {
 
 if (preg_match('#^exam/take/(\d+)$#', $url, $matches)) {
     $_GET['exam_id'] = $matches[1];
-    require_once ROOT_PATH . '/public/exam/take.php';
+    require_once ROOT_PATH . '/public/admin/exam/take.php'; // Corrected path
     exit();
 }
 
