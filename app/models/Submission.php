@@ -2,7 +2,7 @@
 // This file will hold all database functions related to submissions.
 
 /**
- * Fetches the total count of all submissions.
+ * Fetches the total count of all submissions (unfiltered).
  * @param mysqli $conn The database connection object.
  * @return int The total number of submissions.
  */
@@ -51,11 +51,18 @@ function getRecentSubmissionsCount($conn) {
 }
 
 /**
- * Fetches all submissions with exam, user, and score details.
+ * Fetches submissions with search, filter, and pagination.
  * @param mysqli $conn The database connection object.
+ * @param int|null $exam_id The ID of the exam to filter by.
+ * @param string $search The search term for candidate email.
+ * @param int $limit The number of records per page.
+ * @param int $offset The offset for pagination.
  * @return mysqli_result|false The result set on success, false on failure.
  */
-function getAllSubmissions($conn) {
+function getAllSubmissions($conn, $exam_id = null, $search = '', $limit = 10, $offset = 0) {
+    $params = [];
+    $types = '';
+
     $sql = "SELECT
                 s.submission_id,
                 s.status as submission_status,
@@ -67,9 +74,74 @@ function getAllSubmissions($conn) {
             JOIN exams e ON s.exam_id = e.exam_id
             JOIN users u ON s.user_id = u.id
             LEFT JOIN exam_assignments ea ON s.exam_id = ea.exam_id AND u.email = ea.candidate_email
-            ORDER BY s.end_time DESC";
+            WHERE 1=1";
 
-    return mysqli_query($conn, $sql);
+    if ($exam_id !== null) {
+        $sql .= " AND s.exam_id = ?";
+        $params[] = $exam_id;
+        $types .= 'i';
+    }
+    if (!empty($search)) {
+        $sql .= " AND u.email LIKE ?";
+        $searchTerm = "%" . $search . "%";
+        $params[] = $searchTerm;
+        $types .= 's';
+    }
+
+    $sql .= " ORDER BY s.end_time DESC LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $offset;
+    $types .= 'ii';
+
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, $types, ...$params);
+        mysqli_stmt_execute($stmt);
+        return mysqli_stmt_get_result($stmt);
+    }
+    return false;
+}
+
+/**
+ * Gets the total count of submissions for pagination, with filters.
+ * @param mysqli $conn The database connection object.
+ * @param int|null $exam_id The ID of the exam to filter by.
+ * @param string $search The search term for candidate email.
+ * @return int The total number of matching submissions.
+ */
+function getSubmissionsCount($conn, $exam_id = null, $search = '') {
+    $params = [];
+    $types = '';
+
+    $sql = "SELECT COUNT(s.submission_id) as total
+            FROM submissions s
+            JOIN users u ON s.user_id = u.id
+            WHERE 1=1";
+
+    if ($exam_id !== null) {
+        $sql .= " AND s.exam_id = ?";
+        $params[] = $exam_id;
+        $types .= 'i';
+    }
+    if (!empty($search)) {
+        $sql .= " AND u.email LIKE ?";
+        $searchTerm = "%" . $search . "%";
+        $params[] = $searchTerm;
+        $types .= 's';
+    }
+
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($stmt) {
+        if (!empty($types)) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+        }
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $row = mysqli_fetch_assoc($result);
+        mysqli_stmt_close($stmt);
+        return $row ? (int)$row['total'] : 0;
+    }
+    return 0;
 }
 
 /**
@@ -144,7 +216,6 @@ function saveFinalGrade($conn, $submission_id, $exam_id, $candidate_email, $tota
 
         $sql2 = "UPDATE submissions SET marks_breakdown = ? WHERE submission_id = ?";
         $stmt2 = mysqli_prepare($conn, $sql2);
-        // FIXED: Added the missing variable $marks_breakdown_json
         mysqli_stmt_bind_param($stmt2, "si", $marks_breakdown_json, $submission_id);
         if (!mysqli_stmt_execute($stmt2)) {
             throw new Exception("Failed to update submissions");

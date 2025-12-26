@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 // If the admin is not logged in, redirect to the login page
 if (!isset($_SESSION['admin_id'])) {
     header("Location: /exam/login");

@@ -5,10 +5,11 @@ if (!defined('ROOT_PATH')) {
 
 session_start();
 require_once ROOT_PATH . '/config/database.php';
+require_once ROOT_PATH . '/app/models/Question.php';
 
-// Check if the user is an admin
 if (!isset($_SESSION['admin_id'])) {
-    if (isAjaxRequest()) {
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+        header('Content-Type: application/json');
         echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
         exit();
     }
@@ -16,96 +17,112 @@ if (!isset($_SESSION['admin_id'])) {
     exit();
 }
 
-// Helper to check for AJAX
-function isAjaxRequest() {
-    return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
-}
-
 // Handle Create Question Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_question'])) {
+    header('Content-Type: application/json');
     $exam_id = (int)$_POST['exam_id'];
-    $question_text = $_POST['question_text'];
     $type = $_POST['type'];
+    $question_text = trim($_POST['question_text']);
     $marks = (int)$_POST['marks'];
 
-    $options = null;
-    $correct_answer = null;
-
-    // Basic validation
-    if (empty($question_text) || empty($type) || $exam_id === 0) {
-        sendResponse('error', 'Please fill in all required fields.', $exam_id);
+    if (empty($question_text) || $marks <= 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Question text and marks are required.']);
+        exit();
     }
 
-    // If it's an MCQ, process the options
     if ($type === 'mcq') {
-        if (!isset($_POST['options']) || !is_array($_POST['options'])) {
-             sendResponse('error', 'Options are required for MCQ.', $exam_id);
+        $options_array = $_POST['options'] ?? [];
+        $options_array = array_filter($options_array, fn($v) => !empty(trim($v)));
+        if (count($options_array) < 2) {
+            echo json_encode(['status' => 'error', 'message' => 'MCQ must have at least two options.']);
+            exit();
         }
-
-        // Filter out empty options
-        $valid_options = array_filter($_POST['options'], function($value) {
-            return !empty(trim($value));
-        });
-
-        if (count($valid_options) < 2) {
-            sendResponse('error', 'At least 2 options are required.', $exam_id);
-        }
-
-        $options = json_encode($_POST['options']); // Store original array to keep keys A, B, C, D
+        $options = json_encode($options_array);
         $correct_answer = $_POST['correct_answer'] ?? null;
-
-        if (empty($correct_answer)) {
-            sendResponse('error', 'Please select a correct answer.', $exam_id);
+        if (!$correct_answer || !array_key_exists($correct_answer, $options_array)) {
+             echo json_encode(['status' => 'error', 'message' => 'Please select a valid correct answer.']);
+             exit();
         }
-    }
 
-    // Prepare and bind
-    $sql = "INSERT INTO questions (exam_id, type, question_text, options, correct_answer, marks) VALUES (?, ?, ?, ?, ?, ?)";
-    $stmt = mysqli_prepare($conn, $sql);
-
-    if ($stmt) {
+        $sql = "INSERT INTO questions (exam_id, type, question_text, options, correct_answer, marks) VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "issssi", $exam_id, $type, $question_text, $options, $correct_answer, $marks);
 
-        if (mysqli_stmt_execute($stmt)) {
-            $new_id = mysqli_insert_id($conn);
-            if (isAjaxRequest()) {
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'Question saved successfully',
-                    'question' => [
-                        'question_id' => $new_id,
-                        'question_text' => $question_text,
-                        'type' => $type,
-                        'marks' => $marks,
-                        'options' => $options,
-                        'correct_answer' => $correct_answer
-                    ]
-                ]);
-                exit();
-            } else {
-                header("Location: " . BASE_URL . "/admin/exam/questions/$exam_id?success=question_added");
-                exit();
-            }
-        } else {
-            sendResponse('error', 'Database error: ' . mysqli_error($conn), $exam_id);
-        }
-        mysqli_stmt_close($stmt);
-    } else {
-        sendResponse('error', 'Failed to prepare statement.', $exam_id);
+    } else { // Descriptive question
+        $sql = "INSERT INTO questions (exam_id, type, question_text, marks) VALUES (?, ?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "issi", $exam_id, $type, $question_text, $marks);
     }
-    mysqli_close($conn);
 
-} else {
-    header("Location: " . BASE_URL . "/admin/exams");
+    if ($stmt && mysqli_stmt_execute($stmt)) {
+        echo json_encode(['status' => 'success', 'message' => 'Question added successfully.']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Database error: ' . mysqli_error($conn)]);
+    }
+
+    if ($stmt) mysqli_stmt_close($stmt);
+    mysqli_close($conn);
     exit();
 }
 
-function sendResponse($status, $message, $exam_id) {
-    if (isAjaxRequest()) {
-        echo json_encode(['status' => $status, 'message' => $message]);
-        exit();
-    } else {
-        header("Location: " . BASE_URL . "/admin/exam/questions/$exam_id?error=" . urlencode($message));
+// Handle Update Question Request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_question'])) {
+    header('Content-Type: application/json');
+    $question_id = (int)$_POST['question_id'];
+    $type = $_POST['type'];
+    $question_text = trim($_POST['question_text']);
+    $marks = (int)$_POST['marks'];
+
+    // **THE FIX:** Initialize to null, just like in create
+    $options = null;
+    $correct_answer = null;
+
+    if ($type === 'mcq') {
+        $options_array = $_POST['options'] ?? [];
+        $options_array = array_filter($options_array, fn($v) => !empty(trim($v)));
+        if (empty($options_array)) {
+            echo json_encode(['status' => 'error', 'message' => 'MCQ must have at least one option.']);
+            exit();
+        }
+        $options = json_encode($options_array);
+        $correct_answer = $_POST['correct_answer'] ?? null;
+        if (!$correct_answer || !array_key_exists($correct_answer, $options_array)) {
+             echo json_encode(['status' => 'error', 'message' => 'Please select a valid correct answer.']);
+             exit();
+        }
+    }
+
+    if (empty($question_text) || $marks <= 0 || $question_id <= 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid data provided.']);
         exit();
     }
+
+    if (updateQuestion($conn, $question_id, $type, $question_text, $options, $correct_answer, $marks)) {
+        echo json_encode(['status' => 'success', 'message' => 'Question updated successfully.']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Database error: Failed to update question.']);
+    }
+    mysqli_close($conn);
+    exit();
 }
+
+// Handle Delete Question Request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_question'])) {
+    header('Content-Type: application/json');
+    $question_id = (int)$_POST['question_id'];
+    if ($question_id > 0) {
+        if (deleteQuestion($conn, $question_id)) {
+            echo json_encode(['status' => 'success', 'message' => 'Question deleted.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to delete question.']);
+        }
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid question ID.']);
+    }
+    mysqli_close($conn);
+    exit();
+}
+
+// Fallback
+header("Location: " . BASE_URL . "/admin/dashboard");
+exit();

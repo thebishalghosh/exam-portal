@@ -9,7 +9,16 @@ require_once ROOT_PATH . '/app/models/Exam.php';
 require_once ROOT_PATH . '/app/views/partials/admin_header.php';
 require_once ROOT_PATH . '/app/views/partials/admin_sidebar.php';
 
-$exams = getAllExams($conn);
+// --- Pagination & Search Logic ---
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit = 10; // Exams per page
+$offset = ($page - 1) * $limit;
+
+// Fetch data
+$exams = getAllExams($conn, $search, $limit, $offset);
+$total_exams = getExamsCount($conn, $search);
+$total_pages = ceil($total_exams / $limit);
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -23,10 +32,26 @@ $exams = getAllExams($conn);
     </button>
 </div>
 
+<!-- Search Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form action="" method="GET" class="position-relative">
+            <div class="input-group">
+                <input type="text" name="search" id="exam-search" class="form-control" placeholder="Search exams..." value="<?php echo htmlspecialchars($search); ?>" autocomplete="off">
+                <button class="btn btn-outline-secondary" type="submit">Search</button>
+                <?php if (!empty($search)): ?>
+                    <a href="<?php echo BASE_URL; ?>/admin/exams" class="btn btn-outline-danger">Clear</a>
+                <?php endif; ?>
+            </div>
+            <div id="search-suggestions" class="list-group position-absolute w-100" style="z-index: 1000; display: none;"></div>
+        </form>
+    </div>
+</div>
+
 <!-- Exams List Table -->
 <div class="card">
     <div class="card-header">
-        Existing Exams
+        Existing Exams (<?php echo $total_exams; ?> found)
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -65,6 +90,12 @@ $exams = getAllExams($conn);
                                     </button>
                                     <a href="<?php echo BASE_URL; ?>/admin/exam/assign/<?php echo $exam['exam_id']; ?>" class="btn btn-sm btn-secondary">Assign</a>
                                     <a href="<?php echo BASE_URL; ?>/admin/exam/questions/<?php echo $exam['exam_id']; ?>" class="btn btn-sm btn-primary" style="background-color: var(--primary-green); border-color: var(--primary-green);">Manage Questions</a>
+                                    <button type="button" class="btn btn-sm btn-danger delete-exam-btn"
+                                            data-bs-toggle="modal" data-bs-target="#deleteExamModal"
+                                            data-exam-id="<?php echo $exam['exam_id']; ?>"
+                                            data-exam-title="<?php echo htmlspecialchars($exam['title']); ?>">
+                                        Delete
+                                    </button>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
@@ -77,6 +108,27 @@ $exams = getAllExams($conn);
             </table>
         </div>
     </div>
+
+    <!-- Pagination -->
+    <?php if ($total_pages > 1): ?>
+    <div class="card-footer">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+                <li class="page-item <?php if ($page <= 1) echo 'disabled'; ?>">
+                    <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>">Previous</a>
+                </li>
+                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                    <li class="page-item <?php if ($page == $i) echo 'active'; ?>">
+                        <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo urlencode($search); ?>"><?php echo $i; ?></a>
+                    </li>
+                <?php endfor; ?>
+                <li class="page-item <?php if ($page >= $total_pages) echo 'disabled'; ?>">
+                    <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Add Exam Modal -->
@@ -153,6 +205,30 @@ $exams = getAllExams($conn);
     </div>
 </div>
 
+<!-- Delete Exam Modal -->
+<div class="modal fade" id="deleteExamModal" tabindex="-1" aria-labelledby="deleteExamModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteExamModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the exam "<strong id="delete-exam-title"></strong>"?</p>
+                <p class="text-danger">This action cannot be undone. All related questions, assignments, and submissions will be permanently deleted.</p>
+                <form id="deleteExamForm" action="<?php echo BASE_URL; ?>/admin/exam/delete" method="POST">
+                    <input type="hidden" name="exam_id" id="delete-exam-id">
+                    <input type="hidden" name="delete_exam" value="1">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="deleteExamForm" class="btn btn-danger">Delete Exam</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php
 mysqli_close($conn);
 require_once ROOT_PATH . '/app/views/partials/admin_footer.php';
@@ -160,6 +236,7 @@ require_once ROOT_PATH . '/app/views/partials/admin_footer.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Modal Logic
     var viewExamModal = document.getElementById('viewExamModal');
     if(viewExamModal) {
         viewExamModal.addEventListener('show.bs.modal', function (event) {
@@ -171,20 +248,63 @@ document.addEventListener('DOMContentLoaded', function () {
             var end = button.getAttribute('data-end');
             var status = button.getAttribute('data-status');
 
-            var modalTitle = viewExamModal.querySelector('#modal-title');
-            var modalDescription = viewExamModal.querySelector('#modal-description');
-            var modalDuration = viewExamModal.querySelector('#modal-duration');
-            var modalStart = viewExamModal.querySelector('#modal-start');
-            var modalEnd = viewExamModal.querySelector('#modal-end');
-            var modalStatus = viewExamModal.querySelector('#modal-status');
-
-            modalTitle.textContent = title;
-            modalDescription.textContent = description;
-            modalDuration.textContent = duration;
-            modalStart.textContent = start;
-            modalEnd.textContent = end;
-            modalStatus.textContent = status;
+            viewExamModal.querySelector('#modal-title').textContent = title;
+            viewExamModal.querySelector('#modal-description').textContent = description;
+            viewExamModal.querySelector('#modal-duration').textContent = duration;
+            viewExamModal.querySelector('#modal-start').textContent = start;
+            viewExamModal.querySelector('#modal-end').textContent = end;
+            viewExamModal.querySelector('#modal-status').textContent = status;
         });
     }
+
+    var deleteExamModal = document.getElementById('deleteExamModal');
+    if(deleteExamModal) {
+        deleteExamModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var examId = button.getAttribute('data-exam-id');
+            var examTitle = button.getAttribute('data-exam-title');
+
+            deleteExamModal.querySelector('#delete-exam-id').value = examId;
+            deleteExamModal.querySelector('#delete-exam-title').textContent = examTitle;
+        });
+    }
+
+    // AJAX Search Logic
+    const searchInput = document.getElementById('exam-search');
+    const suggestionsBox = document.getElementById('search-suggestions');
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        if (query.length < 2) {
+            suggestionsBox.style.display = 'none';
+            return;
+        }
+
+        fetch('<?php echo BASE_URL; ?>/api/search-exams?q=' + encodeURIComponent(query))
+            .then(response => response.json())
+            .then(data => {
+                suggestionsBox.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(item => {
+                        const a = document.createElement('a');
+                        a.href = '?search=' + encodeURIComponent(item.title);
+                        a.className = 'list-group-item list-group-item-action';
+                        a.textContent = item.title;
+                        suggestionsBox.appendChild(a);
+                    });
+                    suggestionsBox.style.display = 'block';
+                } else {
+                    suggestionsBox.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error fetching suggestions:', error));
+    });
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+            suggestionsBox.style.display = 'none';
+        }
+    });
 });
 </script>

@@ -40,11 +40,17 @@ $routes = [
     'login/process'       => '/app/controllers/LoginController.php',
     'logout'              => '/app/controllers/LogoutController.php',
     'admin/exam/create'   => '/app/controllers/ExamController.php',
+    'admin/exam/delete'   => '/app/controllers/ExamController.php',
     'admin/question/create' => '/app/controllers/QuestionController.php',
+    'admin/question/delete' => '/app/controllers/QuestionController.php',
+    'admin/question/update' => '/app/controllers/QuestionController.php',
     'admin/exam/save-assignment' => '/app/controllers/ExamAssignmentController.php',
-    'admin/submission/save-grade' => '/app/controllers/SubmissionController.php', // New route for saving grades
+    'admin/submission/save-grade' => '/app/controllers/SubmissionController.php',
     'api/submit-exam'     => '/app/controllers/SubmissionController.php',
     'api/log-activity'    => '/app/controllers/LogController.php',
+    'api/upload-snapshot' => '/app/controllers/SnapshotController.php',
+    'admin/image/view'    => '/app/controllers/ImageController.php',
+    'api/search-exams'    => '/app/controllers/SearchController.php', // New route
 ];
 
 // Check static routes first
