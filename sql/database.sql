@@ -101,3 +101,26 @@ CREATE TABLE exam_assignments (
 );
 
 ALTER TABLE submissions ADD COLUMN marks_breakdown JSON DEFAULT NULL AFTER submitted_answers;
+
+
+
+-- Add is_open_registration column to exams table
+ALTER TABLE exams
+    ADD COLUMN is_open_registration BOOLEAN DEFAULT FALSE AFTER status;
+
+-- Add 'open_registration' to the ENUM for candidate_source in exam_assignments
+-- Note: This might require a temporary table or direct ALTER depending on MySQL version and existing data.
+-- A safer way if you have existing data:
+-- 1. ALTER TABLE exam_assignments CHANGE COLUMN candidate_source candidate_source ENUM('internal', 'interview', 'open_registration') NOT NULL DEFAULT 'internal';
+-- 2. If you have a lot of data, you might need to do it in two steps:
+--    ALTER TABLE exam_assignments ADD COLUMN candidate_source_new ENUM('internal', 'interview', 'open_registration') NOT NULL DEFAULT 'internal';
+--    UPDATE exam_assignments SET candidate_source_new = candidate_source;
+--    ALTER TABLE exam_assignments DROP COLUMN candidate_source;
+--    ALTER TABLE exam_assignments CHANGE COLUMN candidate_source_new candidate_source ENUM('internal', 'interview', 'open_registration') NOT NULL DEFAULT 'internal';
+-- For now, assuming you can directly alter or have little data:
+ALTER TABLE exam_assignments
+    MODIFY COLUMN candidate_source ENUM('internal', 'interview', 'open_registration') NOT NULL DEFAULT 'internal';
+
+
+ALTER TABLE users ADD COLUMN roll_number VARCHAR(255) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN college_name VARCHAR(255) DEFAULT NULL;

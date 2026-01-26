@@ -67,7 +67,10 @@ $routes = [
     'api/upload-snapshot' => '/app/controllers/SnapshotController.php',
     'admin/image/view'    => '/app/controllers/ImageController.php',
     'api/search-exams'    => '/app/controllers/SearchController.php',
-    'api/candidate-exams' => '/public/api/candidate-exams.php', // Added missing route
+    'api/candidate-exams' => '/public/api/candidate-exams.php',
+    'register/open-exam'  => '/app/controllers/OpenRegistrationController.php',
+    'exams/open'          => '/public/exams/open.php',
+    'api/get-candidates'  => '/public/api/get-candidates.php', // New route
 ];
 
 // Check static routes first
@@ -98,6 +101,12 @@ if (preg_match('#^exam/take/(\d+)$#', $url, $matches)) {
 if (preg_match('#^admin/submission/view/(\d+)$#', $url, $matches)) {
     $_GET['submission_id'] = $matches[1];
     require_once ROOT_PATH . '/public/admin/view_submission.php';
+    exit();
+}
+
+if (preg_match('#^exam/start-open/(\d+)$#', $url, $matches)) {
+    $_GET['exam_id'] = $matches[1];
+    require_once ROOT_PATH . '/app/controllers/OpenExamController.php';
     exit();
 }
 

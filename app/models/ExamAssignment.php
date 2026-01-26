@@ -30,14 +30,12 @@ function getAssignedEmailsByExamId($conn, $exam_id) {
  * It first deletes all existing assignments for the exam and then inserts the new ones.
  * @param mysqli $conn The database connection object.
  * @param int $exam_id The ID of the exam.
- * @param array $assignments An array of assignment data, each element being an associative array
- *                           e.g., ['candidate_id' => 1, 'candidate_email' => 'a@b.com', 'candidate_source' => 'internal']
+ * @param array $assignments An array of assignment data.
  * @return bool True on success, false on failure.
  */
 function syncAssignments($conn, $exam_id, $assignments) {
     $exam_id = (int)$exam_id;
 
-    // Start a transaction
     mysqli_begin_transaction($conn);
 
     try {
@@ -71,14 +69,56 @@ function syncAssignments($conn, $exam_id, $assignments) {
             mysqli_stmt_close($stmt_insert);
         }
 
-        // If all went well, commit the transaction
         mysqli_commit($conn);
         return true;
 
     } catch (Exception $e) {
-        // If anything failed, roll back the transaction
         mysqli_rollback($conn);
         error_log("Assignment Sync Error: " . $e->getMessage());
         return false;
     }
+}
+
+/**
+ * Fetches all candidates who registered via Open Registration, filtered by a search term.
+ * @param mysqli $conn The database connection object.
+ * @param string $search The search term for candidate email.
+ * @return array An array of candidate objects.
+ */
+function getOpenRegistrationCandidates($conn, $search = '') {
+    $candidates = [];
+    $params = [];
+    $types = '';
+
+    $sql = "SELECT
+                MAX(ea.candidate_id) as id,
+                ea.candidate_email as email,
+                'Open Registration' as name,
+                'Open Registration' as department,
+                'open_registration' as source
+            FROM exam_assignments ea
+            WHERE ea.candidate_source = 'open_registration'";
+
+    if (!empty($search)) {
+        $sql .= " AND ea.candidate_email LIKE ?";
+        $searchTerm = "%" . $search . "%";
+        $params[] = $searchTerm;
+        $types .= 's';
+    }
+
+    $sql .= " GROUP BY ea.candidate_email";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($stmt) {
+        if (!empty($types)) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+        }
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        while ($row = mysqli_fetch_assoc($result)) {
+            $candidates[] = $row;
+        }
+        mysqli_stmt_close($stmt);
+    }
+    return $candidates;
 }

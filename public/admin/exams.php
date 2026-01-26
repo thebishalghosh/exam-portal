@@ -60,6 +60,7 @@ $total_pages = ceil($total_exams / $limit);
                     <tr>
                         <th scope="col">Title</th>
                         <th scope="col">Duration</th>
+                        <th scope="col">Type</th>
                         <th scope="col">Status</th>
                         <th scope="col">Actions</th>
                     </tr>
@@ -70,6 +71,13 @@ $total_pages = ceil($total_exams / $limit);
                             <tr>
                                 <td><?php echo htmlspecialchars($exam['title']); ?></td>
                                 <td><?php echo $exam['duration']; ?> mins</td>
+                                <td>
+                                    <?php if ($exam['is_open_registration']): ?>
+                                        <span class="badge bg-info text-dark">Open Reg.</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-light text-dark border">Private</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <?php if ($exam['status'] == 'active'): ?>
                                         <span class="badge bg-success">Active</span>
@@ -101,7 +109,7 @@ $total_pages = ceil($total_exams / $limit);
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="4" class="text-center">No exams found.</td>
+                            <td colspan="5" class="text-center">No exams found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -164,6 +172,10 @@ $total_pages = ceil($total_exams / $limit);
                             <label for="end_time" class="form-label">End Time</label>
                             <input type="datetime-local" class="form-control" id="end_time" name="end_time" required>
                         </div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_open_registration" name="is_open_registration" value="1">
+                        <label class="form-check-label" for="is_open_registration">Enable Open Registration (Anyone with the link can take this exam)</label>
                     </div>
                 </form>
             </div>
