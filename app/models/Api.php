@@ -9,12 +9,45 @@
  * @return array An array of assigned exams.
  */
 function getAssignedExamsByEmail($conn, $email, $session_token = null) {
-    // ... (existing code)
+    $exams = [];
+
+    $sql = "SELECT
+                e.exam_id,
+                e.title,
+                e.description,
+                e.duration,
+                a.status,
+                a.score
+            FROM exam_assignments a
+            JOIN exams e ON a.exam_id = e.exam_id
+            WHERE a.candidate_email = ?";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        while ($row = mysqli_fetch_assoc($result)) {
+            if ($row['status'] === 'assigned' || $row['status'] === 'started') {
+                if ($session_token) {
+                    // Points to SSO, which now redirects to /exam/check/{id}
+                    $row['start_link'] = BASE_URL . '/login/sso?session_token=' . urlencode($session_token) . '&exam_id=' . $row['exam_id'];
+                } else {
+                    // Fallback points directly to System Check
+                    $row['start_link'] = BASE_URL . '/exam/check/' . $row['exam_id'];
+                }
+            } else {
+                $row['start_link'] = null;
+            }
+            $exams[] = $row;
+        }
+        mysqli_stmt_close($stmt);
+    }
+    return $exams;
 }
 
 /**
- * Fetches candidates from the HR Portal API, filtered by a search term.
- * @param string $search The search term for name or email.
+ * Fetches candidates from the HR Portal API.
  * @return array An array of candidate objects.
  */
 function fetchCandidatesFromHR($search = '') {
@@ -48,7 +81,6 @@ function fetchCandidatesFromHR($search = '') {
 
     if (empty($all_candidates)) return [];
 
-    // Filter results in PHP if a search term is provided
     if (!empty($search)) {
         $search = strtolower($search);
         $all_candidates = array_filter($all_candidates, function($candidate) use ($search) {
@@ -65,8 +97,7 @@ function fetchCandidatesFromHR($search = '') {
 }
 
 /**
- * Fetches candidates from the Interview Portal API, filtered by a search term.
- * @param string $search The search term for name or email.
+ * Fetches candidates from the Interview Portal API.
  * @return array An array of candidate objects.
  */
 function fetchCandidatesFromInterview($search = '') {
@@ -100,7 +131,6 @@ function fetchCandidatesFromInterview($search = '') {
 
     if (empty($all_candidates)) return [];
 
-    // Filter results in PHP if a search term is provided
     if (!empty($search)) {
         $search = strtolower($search);
         $all_candidates = array_filter($all_candidates, function($candidate) use ($search) {

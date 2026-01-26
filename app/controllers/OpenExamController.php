@@ -35,9 +35,6 @@ if (mysqli_stmt_num_rows($stmt_check) === 0) {
     $sql_insert = "INSERT INTO exam_assignments (exam_id, candidate_id, candidate_email, candidate_source, status) VALUES (?, ?, ?, 'open_registration', 'assigned')";
     $stmt_insert = mysqli_prepare($conn, $sql_insert);
     if ($stmt_insert) {
-        // Note: The candidate_id here is the user_id from our local users table.
-        // The original table design might have intended this to be an employee_id from HR.
-        // For open registration, using the local user_id is correct.
         mysqli_stmt_bind_param($stmt_insert, "iis", $exam_id, $candidate_id, $candidate_email);
         if (!mysqli_stmt_execute($stmt_insert)) {
             die("Failed to create exam assignment. Please try again.");
@@ -47,6 +44,6 @@ if (mysqli_stmt_num_rows($stmt_check) === 0) {
 }
 mysqli_stmt_close($stmt_check);
 
-// 5. Redirect to the exam page
-header("Location: " . BASE_URL . "/exam/take/" . $exam_id);
+// 5. Redirect to the System Check Page (UPDATED)
+header("Location: " . BASE_URL . "/exam/check/" . $exam_id);
 exit();

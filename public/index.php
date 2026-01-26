@@ -31,7 +31,6 @@ if (strpos($request_uri, $script_name) === 0) {
 }
 
 // **FIX for Localhost Subfolder**: If the URL still starts with /exam, strip it
-// This handles the case where script_name is '/' but the app is in '/exam'
 if (strpos($url, '/exam') === 0) {
     $url = substr($url, 5); // Remove '/exam'
 }
@@ -71,6 +70,7 @@ $routes = [
     'register/open-exam'  => '/app/controllers/OpenRegistrationController.php',
     'exams/open'          => '/public/exams/open.php',
     'api/get-candidates'  => '/public/api/get-candidates.php',
+    'api/save-entry-photo' => '/app/controllers/EntryPhotoController.php', // New Route
 ];
 
 // Check static routes first
@@ -95,6 +95,13 @@ if (preg_match('#^admin/exam/assign/(\d+)$#', $url, $matches)) {
 if (preg_match('#^exam/take/(\d+)$#', $url, $matches)) {
     $_GET['exam_id'] = $matches[1];
     require_once ROOT_PATH . '/public/exam/take.php';
+    exit();
+}
+
+// New Route for System Check
+if (preg_match('#^exam/check/(\d+)$#', $url, $matches)) {
+    $_GET['exam_id'] = $matches[1];
+    require_once ROOT_PATH . '/public/exam/system_check.php';
     exit();
 }
 

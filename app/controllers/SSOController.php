@@ -28,6 +28,7 @@ curl_setopt($ch, CURLOPT_POST, 1);
 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['session_token' => $session_token]));
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-KEY: ' . $api_key]);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For localhost
 
 $response = curl_exec($ch);
 $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -60,7 +61,6 @@ if ($user_role === 'admin') {
         $admin_id = $row['admin_id'];
     } else {
         // Auto-create admin account if it doesn't exist
-        // Note: A dummy password is used as auth is handled by the HR portal
         $dummy_password = password_hash(uniqid(), PASSWORD_DEFAULT);
         $sql_create = "INSERT INTO admin (username, password) VALUES (?, ?)";
         $stmt_create = mysqli_prepare($conn, $sql_create);
@@ -111,9 +111,9 @@ if ($user_role === 'admin') {
     $_SESSION['candidate_email'] = $user_email;
     $_SESSION['candidate_logged_in'] = true;
 
-    // Redirect to the Exam
+    // Redirect to the System Check Page (UPDATED)
     if ($target_exam_id > 0) {
-        header("Location: " . BASE_URL . "/exam/take/" . $target_exam_id);
+        header("Location: " . BASE_URL . "/exam/check/" . $target_exam_id);
     } else {
         die("Login successful! You can now close this window.");
     }
