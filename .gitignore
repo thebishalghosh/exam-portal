@@ -11,8 +11,6 @@
 .DS_Store
 Thumbs.db
 
-# Vendor (If you add Composer later)
-/vendor/
 
 # Logs (If you add file logging later)
 /storage/logs/*.log
@@ -21,3 +19,4 @@ Thumbs.db
 # User Uploads (Keep the folder, ignore the content)
 /storage/snapshots/*
 !/storage/snapshots/.gitkeep
+/public/.htaccess
