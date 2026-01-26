@@ -905,7 +905,7 @@ const QUESTIONS = <?php echo json_encode($questions); ?>;
 const CANDIDATE_EMAIL = <?php echo json_encode($candidate_email); ?>;
 
 // --- Config ---
-const SNAPSHOT_INTERVAL_MS = 10000;
+const SNAPSHOT_INTERVAL_MS = 30000;
 const AUTO_SUBMIT_AFTER_VISIBILITY = 3;
 const SERVER_LOG_ENDPOINT = '<?php echo BASE_URL; ?>/api/log-activity';
 const SERVER_SUBMIT_ENDPOINT = '<?php echo BASE_URL; ?>/api/submit-exam';
@@ -1147,7 +1147,7 @@ async function takeAndSendSnapshot() {
         canvas.height = video.videoHeight || 240;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataURL = canvas.toDataURL('image/jpeg', 0.6);
+        const dataURL = canvas.toDataURL('image/jpeg', 0.4);
         await fetch(SERVER_SNAPSHOT_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
