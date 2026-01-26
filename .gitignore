@@ -3,4 +3,5 @@
 
 # IDE settings
 .idea/
-.htaccess
+
+/storage

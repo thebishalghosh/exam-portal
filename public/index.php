@@ -19,25 +19,21 @@ if (getenv('APP_DEBUG') === 'true') {
 // --- Base URL ---
 define('BASE_URL', getenv('APP_URL'));
 
-// --- Robust URL Parsing ---
-// Get the full request URI
-$request_uri = $_SERVER['REQUEST_URI'];
+// --- Routing Logic ---
+// Get the path from the request URI
+$request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$script_name = dirname($_SERVER['SCRIPT_NAME']);
 
-// Get the path component of the base URL (e.g., '/exam' on localhost)
-$base_path = parse_url(BASE_URL, PHP_URL_PATH);
-
-// Calculate the relative URL by removing the base path
-if ($base_path && strpos($request_uri, $base_path) === 0) {
-    $url = substr($request_uri, strlen($base_path));
+// Remove the script path from the request URI to get the relative route
+// Example: Request: /exam/login, Script: /exam, Result: /login
+if (strpos($request_uri, $script_name) === 0) {
+    $url = substr($request_uri, strlen($script_name));
 } else {
     $url = $request_uri;
 }
 
-// Remove query string and leading/trailing slashes
-$url = strtok($url, '?');
 $url = trim($url, '/');
 $url = filter_var($url, FILTER_SANITIZE_URL);
-
 
 // Redirect to login if the URL is empty
 if ($url === '') {
@@ -70,7 +66,7 @@ $routes = [
     'api/candidate-exams' => '/public/api/candidate-exams.php',
     'register/open-exam'  => '/app/controllers/OpenRegistrationController.php',
     'exams/open'          => '/public/exams/open.php',
-    'api/get-candidates'  => '/public/api/get-candidates.php', // New route
+    'api/get-candidates'  => '/public/api/get-candidates.php',
 ];
 
 // Check static routes first
@@ -113,3 +109,4 @@ if (preg_match('#^exam/start-open/(\d+)$#', $url, $matches)) {
 // If no route is found, show a 404 error
 http_response_code(404);
 echo "<h1>404 Page Not Found</h1>";
+echo "<p>Requested URL: " . htmlspecialchars($url) . "</p>"; // Debugging help
