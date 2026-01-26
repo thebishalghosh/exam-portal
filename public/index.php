@@ -70,7 +70,7 @@ $routes = [
     'register/open-exam'  => '/app/controllers/OpenRegistrationController.php',
     'exams/open'          => '/public/exams/open.php',
     'api/get-candidates'  => '/public/api/get-candidates.php',
-    'api/save-entry-photo' => '/app/controllers/EntryPhotoController.php', // New Route
+    'api/save-entry-photo' => '/app/controllers/EntryPhotoController.php',
 ];
 
 // Check static routes first
@@ -98,7 +98,6 @@ if (preg_match('#^exam/take/(\d+)$#', $url, $matches)) {
     exit();
 }
 
-// New Route for System Check
 if (preg_match('#^exam/check/(\d+)$#', $url, $matches)) {
     $_GET['exam_id'] = $matches[1];
     require_once ROOT_PATH . '/public/exam/system_check.php';
