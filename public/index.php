@@ -23,17 +23,18 @@ define('BASE_URL', getenv('APP_URL'));
 $request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $script_name = dirname($_SERVER['SCRIPT_NAME']);
 
-// Remove the script path from the request URI
+// 1. Strip the script path (e.g., /public) if it exists in the URI
 if (strpos($request_uri, $script_name) === 0) {
     $url = substr($request_uri, strlen($script_name));
 } else {
     $url = $request_uri;
 }
 
-// **FIX for Localhost Subfolder**: If the URL starts with /exam/ or is exactly /exam
-// This prevents it from accidentally matching routes like /exams/open
-if ($url === '/exam' || strpos($url, '/exam/') === 0) {
-    $url = substr($url, 5); // Remove '/exam'
+// 2. Strip the BASE_URL path component (e.g., /exam) if it exists
+// This handles the subfolder deployment on localhost
+$base_path = parse_url(BASE_URL, PHP_URL_PATH);
+if ($base_path && $base_path !== '/' && strpos($url, $base_path) === 0) {
+    $url = substr($url, strlen($base_path));
 }
 
 $url = trim($url, '/');
