@@ -1,7 +1,23 @@
-# Environment variables
+# Environment Variables (Never commit secrets)
 .env
 
-# IDE settings
+# IDE & Editor Settings
 .idea/
+.vscode/
+*.swp
+*.swo
 
-/storage
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# Vendor (If you add Composer later)
+/vendor/
+
+# Logs (If you add file logging later)
+/storage/logs/*.log
+!/storage/logs/.gitkeep
+
+# User Uploads (Keep the folder, ignore the content)
+/storage/snapshots/*
+!/storage/snapshots/.gitkeep
