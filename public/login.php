@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Define BASE_URL at the top so it's always available
+// Define BASE_URL if it's not already set
 if (!defined('BASE_URL')) {
     require_once dirname(__DIR__) . '/config/app.php';
     define('BASE_URL', getenv('APP_URL'));
@@ -19,7 +19,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Exam Portal</title>
-    <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>/public/assets/images/Travarsa-Logo.png">
+    <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Travarsa-Logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -78,7 +78,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
 <body>
     <div class="login-card">
         <div class="login-header">
-            <img src="<?php echo BASE_URL; ?>/public/assets/images/Travarsa-Logo.png" alt="Travarsa Logo" class="login-logo">
+            <img src="<?php echo BASE_URL; ?>/assets/images/Travarsa-Logo.png" alt="Travarsa Logo" class="login-logo">
             <h2>Admin Login</h2>
         </div>
 

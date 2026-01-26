@@ -9,7 +9,7 @@ if (!defined('BASE_URL')) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Candidate Registration - Exam Portal</title>
-    <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>/public/assets/images/Travarsa-Logo.png">
+    <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Travarsa-Logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -149,7 +149,7 @@ if (!defined('BASE_URL')) {
         <!-- Right Side -->
         <div class="right-panel">
             <div class="form-container">
-                <img src="<?php echo BASE_URL; ?>/public/assets/images/Travarsa-Logo.png" alt="Travarsa Logo" class="logo-img">
+                <img src="<?php echo BASE_URL; ?>/assets/images/Travarsa-Logo.png" alt="Travarsa Logo" class="logo-img">
 
                 <h2 class="form-title">Create Account</h2>
                 <p class="form-subtitle">Enter your details to access available exams.</p>

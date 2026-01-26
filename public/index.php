@@ -20,16 +20,20 @@ if (getenv('APP_DEBUG') === 'true') {
 define('BASE_URL', getenv('APP_URL'));
 
 // --- Routing Logic ---
-// Get the path from the request URI
 $request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $script_name = dirname($_SERVER['SCRIPT_NAME']);
 
-// Remove the script path from the request URI to get the relative route
-// Example: Request: /exam/login, Script: /exam, Result: /login
+// Remove the script path from the request URI
 if (strpos($request_uri, $script_name) === 0) {
     $url = substr($request_uri, strlen($script_name));
 } else {
     $url = $request_uri;
+}
+
+// **FIX for Localhost Subfolder**: If the URL still starts with /exam, strip it
+// This handles the case where script_name is '/' but the app is in '/exam'
+if (strpos($url, '/exam') === 0) {
+    $url = substr($url, 5); // Remove '/exam'
 }
 
 $url = trim($url, '/');
@@ -109,4 +113,4 @@ if (preg_match('#^exam/start-open/(\d+)$#', $url, $matches)) {
 // If no route is found, show a 404 error
 http_response_code(404);
 echo "<h1>404 Page Not Found</h1>";
-echo "<p>Requested URL: " . htmlspecialchars($url) . "</p>"; // Debugging help
+echo "<p>Requested URL: " . htmlspecialchars($url) . "</p>";

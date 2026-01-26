@@ -1,16 +1,11 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # --- Force HTTPS (Uncomment on live server) ---
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # Set the base directory for the rewrite rules
-    # ON LOCALHOST: Use /exam/
-    # ON LIVE SERVER: Change this to /
-    RewriteBase /exam/
-
-    # If the request is not for a file or directory that exists
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-
-    # Redirect the request to public/index.php, passing the URL as a query parameter
-    RewriteRule ^(.*)$ public/index.php?url=$1 [L,QSA]
+    # Redirect everything to the public folder
+    # This allows accessing the site via http://domain.com/ instead of http://domain.com/public/
+    RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
