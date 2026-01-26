@@ -30,8 +30,9 @@ if (strpos($request_uri, $script_name) === 0) {
     $url = $request_uri;
 }
 
-// **FIX for Localhost Subfolder**: If the URL still starts with /exam, strip it
-if (strpos($url, '/exam') === 0) {
+// **FIX for Localhost Subfolder**: If the URL starts with /exam/ or is exactly /exam
+// This prevents it from accidentally matching routes like /exams/open
+if ($url === '/exam' || strpos($url, '/exam/') === 0) {
     $url = substr($url, 5); // Remove '/exam'
 }
 
