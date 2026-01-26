@@ -11,7 +11,10 @@ require_once ROOT_PATH . '/app/views/partials/admin_sidebar.php';
 
 // --- Pagination & Search Logic ---
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-$filter_exam_id = isset($_GET['exam_id']) ? (int)$_GET['exam_id'] : null;
+
+// FIX: Check for empty string to correctly handle "All Exams" (null)
+$filter_exam_id = !empty($_GET['exam_id']) ? (int)$_GET['exam_id'] : null;
+
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = 10; // Submissions per page
 $offset = ($page - 1) * $limit;
