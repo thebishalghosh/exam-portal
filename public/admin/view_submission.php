@@ -151,7 +151,8 @@ $total_possible_marks = 0;
                                     <small class="d-block text-center text-muted mt-1" style="font-size: 10px;">
                                         <?php
                                             $parts = explode('_', pathinfo($snapshot, PATHINFO_FILENAME));
-                                            echo date('H:i:s', end($parts));
+                                            // Fix: Ensure timestamp is an integer
+                                            echo date('H:i:s', (int)end($parts));
                                         ?>
                                     </small>
                                 </div>
@@ -177,7 +178,12 @@ $total_possible_marks = 0;
                                 ?>
                                 <li class="list-group-item d-flex justify-content-between align-items-center <?php echo $is_suspicious ? 'list-group-item-danger' : ''; ?>">
                                     <span style="font-size: 12px;"><?php echo htmlspecialchars($log['event_type']); ?></span>
-                                    <small class="text-muted" style="font-size: 11px;"><?php echo date('H:i:s', strtotime($log['timestamp'])); ?></small>
+                                    <small class="text-muted" style="font-size: 11px;">
+                                        <?php
+                                            // Fix: Ensure timestamp is converted to time
+                                            echo date('H:i:s', strtotime($log['timestamp']));
+                                        ?>
+                                    </small>
                                 </li>
                             <?php endforeach; ?>
                         </ul>
