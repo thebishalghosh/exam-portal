@@ -31,18 +31,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($row = mysqli_fetch_assoc($result_check)) {
         $user_id = $row['id'];
-        // Update existing user's roll_number and college_name if provided
-        $sql_update = "UPDATE users SET roll_number = ?, college_name = ? WHERE id = ?";
+        // Update existing user's details including name
+        $sql_update = "UPDATE users SET name = ?, roll_number = ?, college_name = ? WHERE id = ?";
         $stmt_update = mysqli_prepare($conn, $sql_update);
-        mysqli_stmt_bind_param($stmt_update, "ssi", $roll_number, $college_name, $user_id);
+        mysqli_stmt_bind_param($stmt_update, "sssi", $name, $roll_number, $college_name, $user_id);
         mysqli_stmt_execute($stmt_update);
         mysqli_stmt_close($stmt_update);
 
     } else {
-        // Create new user
-        $sql_create = "INSERT INTO users (email, roll_number, college_name) VALUES (?, ?, ?)";
+        // Create new user with name
+        $sql_create = "INSERT INTO users (name, email, roll_number, college_name) VALUES (?, ?, ?, ?)";
         $stmt_create = mysqli_prepare($conn, $sql_create);
-        mysqli_stmt_bind_param($stmt_create, "sss", $email, $roll_number, $college_name);
+        mysqli_stmt_bind_param($stmt_create, "ssss", $name, $email, $roll_number, $college_name);
         if (mysqli_stmt_execute($stmt_create)) {
             $user_id = mysqli_insert_id($conn);
         } else {
