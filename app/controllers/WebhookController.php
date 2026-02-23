@@ -11,8 +11,23 @@ require_once ROOT_PATH . '/app/services/EmailService.php';
 // Always respond with JSON from this controller
 header('Content-Type: application/json');
 
+// Small helper to safely fetch headers on all SAPIs (Apache, FPM, etc.)
+function exam_get_request_headers() {
+    if (function_exists('getallheaders')) {
+        return getallheaders();
+    }
+    $headers = [];
+    foreach ($_SERVER as $name => $value) {
+        if (strpos($name, 'HTTP_') === 0) {
+            $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+            $headers[$key] = $value;
+        }
+    }
+    return $headers;
+}
+
 // --- 1. Security Check ---
-$headers = getallheaders();
+$headers = exam_get_request_headers();
 // Be tolerant of different header casing produced by various servers/proxies
 $api_key = '';
 if (isset($headers['X-API-KEY'])) {
