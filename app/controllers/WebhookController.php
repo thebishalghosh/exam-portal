@@ -14,10 +14,15 @@ header('Content-Type: application/json');
 // --- 1. Security Check ---
 $headers = getallheaders();
 // Be tolerant of different header casing produced by various servers/proxies
-$api_key = $headers['X-API-KEY']
-    ?? $headers['x-api-key']
-    ?? $headers['X-Api-Key']
-    ?? '';
+$api_key = '';
+if (isset($headers['X-API-KEY'])) {
+    $api_key = $headers['X-API-KEY'];
+} elseif (isset($headers['x-api-key'])) {
+    $api_key = $headers['x-api-key'];
+} elseif (isset($headers['X-Api-Key'])) {
+    $api_key = $headers['X-Api-Key'];
+}
+
 $valid_key = getenv('EXAM_API_KEY');
 
 if (empty($api_key) || $api_key !== $valid_key) {
