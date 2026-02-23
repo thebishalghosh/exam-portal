@@ -64,36 +64,56 @@ if (empty($email) || empty($name) || $exam_id <= 0) {
 $user_id = 0;
 $sql_check = "SELECT id FROM users WHERE email = ?";
 $stmt_check = mysqli_prepare($conn, $sql_check);
+
+if (!$stmt_check) {
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Database error preparing user lookup.']);
+    mysqli_close($conn);
+    exit();
+}
+
 mysqli_stmt_bind_param($stmt_check, "s", $email);
 mysqli_stmt_execute($stmt_check);
-$result_check = mysqli_stmt_get_result($stmt_check);
 
-if ($row = mysqli_fetch_assoc($result_check)) {
-    $user_id = $row['id'];
-    // Update name/phone if provided
-    // Note: Ensure 'mobile_number' column exists, otherwise remove it from query
-    // Assuming mobile_number exists or ignoring it for safety if not sure.
-    // Let's stick to updating name for now to be safe.
+// Use bind_result/fetch instead of mysqli_stmt_get_result for maximum compatibility
+mysqli_stmt_bind_result($stmt_check, $existing_user_id);
+
+if (mysqli_stmt_fetch($stmt_check)) {
+    $user_id = (int)$existing_user_id;
+    mysqli_stmt_close($stmt_check);
+
+    // Update name if provided
     $sql_update = "UPDATE users SET name = ? WHERE id = ?";
     $stmt_update = mysqli_prepare($conn, $sql_update);
-    mysqli_stmt_bind_param($stmt_update, "si", $name, $user_id);
-    mysqli_stmt_execute($stmt_update);
-    mysqli_stmt_close($stmt_update);
+    if ($stmt_update) {
+        mysqli_stmt_bind_param($stmt_update, "si", $name, $user_id);
+        mysqli_stmt_execute($stmt_update);
+        mysqli_stmt_close($stmt_update);
+    }
 } else {
+    mysqli_stmt_close($stmt_check);
+
     // Create new user
     $sql_create = "INSERT INTO users (name, email) VALUES (?, ?)";
     $stmt_create = mysqli_prepare($conn, $sql_create);
+    if (!$stmt_create) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Database error preparing user insert.']);
+        mysqli_close($conn);
+        exit();
+    }
     mysqli_stmt_bind_param($stmt_create, "ss", $name, $email);
     if (mysqli_stmt_execute($stmt_create)) {
         $user_id = mysqli_insert_id($conn);
     } else {
         http_response_code(500);
         echo json_encode(['status' => 'error', 'message' => 'Failed to create user']);
+        mysqli_stmt_close($stmt_create);
+        mysqli_close($conn);
         exit();
     }
     mysqli_stmt_close($stmt_create);
 }
-mysqli_stmt_close($stmt_check);
 
 // --- 4. Assign Exam ---
 // Check if already assigned
