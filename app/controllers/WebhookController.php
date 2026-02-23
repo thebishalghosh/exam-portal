@@ -11,6 +11,20 @@ require_once ROOT_PATH . '/app/services/EmailService.php';
 // Always respond with JSON from this controller
 header('Content-Type: application/json');
 
+// Log any fatal error that happens in this controller so we can debug 500s.
+register_shutdown_function(function () {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        $logDir = ROOT_PATH . '/storage/logs';
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0777, true);
+        }
+        $message = '[' . date('Y-m-d H:i:s') . '] '
+            . $error['message'] . ' in ' . $error['file'] . ' on line ' . $error['line'] . "\n";
+        @file_put_contents($logDir . '/webhook_fatal.log', $message, FILE_APPEND);
+    }
+});
+
 // Small helper to safely fetch headers on all SAPIs (Apache, FPM, etc.)
 function exam_get_request_headers() {
     if (function_exists('getallheaders')) {
