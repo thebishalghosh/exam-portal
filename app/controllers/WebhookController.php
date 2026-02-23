@@ -8,6 +8,9 @@ require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/app/models/ExamAssignment.php';
 require_once ROOT_PATH . '/app/services/EmailService.php';
 
+// Always respond with JSON from this controller
+header('Content-Type: application/json');
+
 // --- 1. Security Check ---
 $headers = getallheaders();
 // Be tolerant of different header casing produced by various servers/proxies
@@ -103,7 +106,7 @@ $emailService = new EmailService();
 
 try {
     $emailService->sendEmail($email, $subject, $body);
-} catch (Throwable $e) {
+} catch (\Exception $e) {
     error_log('WebhookController email error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
