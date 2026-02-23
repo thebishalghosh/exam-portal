@@ -10,7 +10,11 @@ require_once ROOT_PATH . '/app/services/EmailService.php';
 
 // --- 1. Security Check ---
 $headers = getallheaders();
-$api_key = isset($headers['X-API-KEY']) ? $headers['X-API-KEY'] : '';
+// Be tolerant of different header casing produced by various servers/proxies
+$api_key = $headers['X-API-KEY']
+    ?? $headers['x-api-key']
+    ?? $headers['X-Api-Key']
+    ?? '';
 $valid_key = getenv('EXAM_API_KEY');
 
 if (empty($api_key) || $api_key !== $valid_key) {
