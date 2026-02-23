@@ -1175,7 +1175,8 @@ function renderQuestions() {
 
         const questionText = document.createElement('div');
         questionText.className = 'question-text';
-        questionText.textContent = q.question_text;
+        // Render stored rich-text HTML for the question
+        questionText.innerHTML = q.question_text;
 
         questionHeader.appendChild(questionNumber);
         questionHeader.appendChild(questionText);

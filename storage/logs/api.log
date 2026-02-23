@@ -1,0 +1,10 @@
+WEBHOOK: 2026-02-23T18:32:40+00:00 payload={"name":"test","email":"t@t.com12"}
+WEBHOOK RESULT: 2026-02-23T18:32:42+00:00 response={"status":"success","message":"Candidate processed. Magic link email sent."}
+WEBHOOK: 2026-02-23T18:35:20+00:00 payload={"name":"Bishal Ghosh","email":"thebishalghosh@gmail.com"}
+WEBHOOK RESULT: 2026-02-23T18:35:22+00:00 response={"status":"success","message":"Candidate processed. Magic link email sent."}
+WEBHOOK: 2026-02-24 00:18:23 payload={"name":"test","email":"hi@gmail.com"}
+WEBHOOK: 2026-02-24 00:20:52 payload={"name":"Bishal Ghosh","email":"hii@test.com"}
+WEBHOOK: 2026-02-24 00:26:38 payload={"name":"Bishal Ghosh","email":"hii@test.com"}
+WEBHOOK: 2026-02-24 00:48:02 payload={"name":"hi","email":"tata@tata.com"}
+WEBHOOK: 2026-02-24 01:08:02 payload={"name":"Joy Das","email":"joy@hotmail.com"}
+WEBHOOK: 2026-02-24 01:34:25 payload={"name":"h","email":"t@h.com"}

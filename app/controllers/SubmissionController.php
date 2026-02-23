@@ -11,6 +11,7 @@ if (!defined('ROOT_PATH')) {
 
 require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/app/models/Submission.php';
+require_once ROOT_PATH . '/app/models/Api.php'; // for talking to external HR/interview portals
 
 session_start();
 
@@ -39,6 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_grade'])) {
     $candidate_email = $submission_details['candidate_email'];
 
     if (saveFinalGrade($conn, $submission_id, $exam_id, $candidate_email, $total_score, $marks_breakdown_json)) {
+        // notify interview portal that grading is done (manual score)
+        $exam_title = $submission_details['exam_title'] ?? null;
+        reportExamResultToInterview($candidate_email, $exam_id, 'graded', $total_score, $exam_title, 'manual');
         header("Location: " . BASE_URL . "/admin/submissions?success=graded");
     } else {
         header("Location: " . BASE_URL . "/admin/submission/view/$submission_id?error=dberror");
@@ -65,6 +69,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($exam_id === 0 || empty($email)) {
         echo json_encode(['status' => 'error', 'message' => 'Missing exam ID or email.']);
         exit();
+    }
+
+    // attempt to fetch exam title
+    $exam_title = '';
+    $stmt_et = mysqli_prepare($conn, "SELECT title FROM exams WHERE exam_id = ?");
+    if ($stmt_et) {
+        mysqli_stmt_bind_param($stmt_et, "i", $exam_id);
+        mysqli_stmt_execute($stmt_et);
+        mysqli_stmt_bind_result($stmt_et, $exam_title);
+        mysqli_stmt_fetch($stmt_et);
+        mysqli_stmt_close($stmt_et);
+    }
+
+    // compute an automatic score based on mcq correctness, if possible
+    $auto_score = null;
+    $answers_arr = json_decode($answers, true);
+    if (is_array($answers_arr)) {
+        $auto_score = 0;
+        $sql_q = "SELECT question_id, type, correct_answer, marks FROM questions WHERE exam_id = ?";
+        $stmt_q = mysqli_prepare($conn, $sql_q);
+        if ($stmt_q) {
+            mysqli_stmt_bind_param($stmt_q, "i", $exam_id);
+            mysqli_stmt_execute($stmt_q);
+            mysqli_stmt_bind_result($stmt_q, $q_id, $q_type, $q_correct, $q_marks);
+            while (mysqli_stmt_fetch($stmt_q)) {
+                if ($q_type === 'mcq' && isset($answers_arr[$q_id]) && $answers_arr[$q_id] == $q_correct) {
+                    $auto_score += (float)$q_marks;
+                }
+            }
+            mysqli_stmt_close($stmt_q);
+        }
     }
 
     // Find or Create User
@@ -123,6 +158,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 mysqli_stmt_execute($stmt_update);
                 mysqli_stmt_close($stmt_update);
             }
+
+            // let the portal know the candidate finished the exam
+            reportExamResultToInterview(
+                $email,
+                $exam_id,
+                $status,
+                $auto_score,
+                $exam_title,
+                'auto'
+            );
 
             echo json_encode(['status' => 'success', 'message' => 'Exam submitted successfully.']);
         } else {

@@ -72,11 +72,18 @@ $total_pages = ceil($total_exams / $limit);
                                 <td><?php echo htmlspecialchars($exam['title']); ?></td>
                                 <td><?php echo $exam['duration']; ?> mins</td>
                                 <td>
-                                    <?php if ($exam['is_open_registration']): ?>
-                                        <span class="badge bg-info text-dark">Open Reg.</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-light text-dark border">Private</span>
-                                    <?php endif; ?>
+                                    <?php
+                                        $type = $exam['exam_type'];
+                                        $badge_class = 'bg-secondary';
+                                        if ($type == 'open') {
+                                            $badge_class = 'bg-info text-dark';
+                                        } elseif ($type == 'interview') {
+                                            $badge_class = 'bg-warning text-dark';
+                                        } elseif ($type == 'internal') {
+                                            $badge_class = 'bg-light text-dark border';
+                                        }
+                                    ?>
+                                    <span class="badge <?php echo $badge_class; ?>"><?php echo ucfirst($type); ?></span>
                                 </td>
                                 <td>
                                     <?php if ($exam['status'] == 'active'): ?>
@@ -173,9 +180,18 @@ $total_pages = ceil($total_exams / $limit);
                             <input type="datetime-local" class="form-control" id="end_time" name="end_time" required>
                         </div>
                     </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="is_open_registration" name="is_open_registration" value="1">
-                        <label class="form-check-label" for="is_open_registration">Enable Open Registration (Anyone with the link can take this exam)</label>
+                    <div class="mb-3">
+                        <label for="exam_type" class="form-label">Exam Type</label>
+                        <select class="form-select" id="exam_type" name="exam_type" required>
+                            <option value="internal" selected>Internal</option>
+                            <option value="open">Open</option>
+                            <option value="interview">Interview</option>
+                        </select>
+                        <div class="form-text">
+                            - <strong>Internal:</strong> Only assigned candidates can access.<br>
+                            - <strong>Open:</strong> Anyone with the link can register and take the exam.<br>
+                            - <strong>Interview:</strong> For candidates coming from the interview portal.
+                        </div>
                     </div>
                 </form>
             </div>

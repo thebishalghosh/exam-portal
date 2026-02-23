@@ -14,7 +14,7 @@ function getAllExams($conn, $search = '', $limit = 10, $offset = 0) {
     $limit = (int)$limit;
     $offset = (int)$offset;
 
-    $sql = "SELECT exam_id, title, description, duration, start_time, end_time, status, is_open_registration
+    $sql = "SELECT exam_id, title, description, duration, start_time, end_time, status, exam_type
             FROM exams
             WHERE title LIKE ?
             ORDER BY created_at DESC
@@ -59,7 +59,7 @@ function getExamsCount($conn, $search = '') {
  */
 function getExamById($conn, $exam_id) {
     $exam_id = (int)$exam_id;
-    $sql = "SELECT exam_id, title, duration, is_open_registration FROM exams WHERE exam_id = ?";
+    $sql = "SELECT exam_id, title, duration, exam_type FROM exams WHERE exam_id = ?";
 
     $stmt = mysqli_prepare($conn, $sql);
     if ($stmt) {
@@ -136,7 +136,7 @@ function getExamStatusCounts($conn) {
 function getOpenRegistrationExams($conn) {
     $sql = "SELECT exam_id, title, description, duration
             FROM exams
-            WHERE is_open_registration = TRUE AND status = 'active'
+            WHERE exam_type = 'open' AND status = 'active'
             ORDER BY title ASC";
     $result = mysqli_query($conn, $sql);
     return $result;

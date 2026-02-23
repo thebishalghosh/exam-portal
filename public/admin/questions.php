@@ -134,6 +134,21 @@ require_once ROOT_PATH . '/app/views/partials/admin_sidebar.php';
         });
     }
 
+    // Decode HTML entities from data-text back into real HTML for Quill
+    function decodeHtmlEntities(encoded) {
+        if (!encoded) return '';
+        const map = {
+            '&lt;': '<',
+            '&gt;': '>',
+            '&amp;': '&',
+            '&quot;': '"',
+            '&#039;': "'"
+        };
+        return encoded.replace(/(&lt;|&gt;|&amp;|&quot;|&#039;)/g, function(m) {
+            return map[m] || m;
+        });
+    }
+
     questionsContainer.addEventListener('click', function (e) {
         const card = e.target.closest('.question-card');
         if (!card) return;
@@ -178,7 +193,7 @@ require_once ROOT_PATH . '/app/views/partials/admin_sidebar.php';
 
                     <!-- Quill Editor Wrapper -->
                     <div class="mb-3">
-                        <div class="quill-editor" style="height: 100px;"></div>
+                        <div class="quill-editor"></div>
                         <input type="hidden" name="question_text" required>
                     </div>
 
@@ -309,7 +324,7 @@ require_once ROOT_PATH . '/app/views/partials/admin_sidebar.php';
 
                 <!-- Quill Editor -->
                 <div class="mb-3">
-                    <div class="quill-editor" style="height: 100px;"></div>
+                    <div class="quill-editor"></div>
                     <input type="hidden" name="question_text">
                 </div>
 
@@ -351,11 +366,9 @@ require_once ROOT_PATH . '/app/views/partials/admin_sidebar.php';
         const quillDiv = editMode.querySelector('.quill-editor');
         const quill = initQuill(quillDiv);
 
-        // Set initial content (decode HTML entities if needed, but innerHTML usually handles it)
-        // Since data-text is htmlspecialchars encoded, we need to decode it for Quill
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = qText;
-        quill.root.innerHTML = tempDiv.innerText; // Decode entities
+        // Set initial content by decoding the HTML-escaped string stored in data-text
+        const decodedHtml = decodeHtmlEntities(qText);
+        quill.root.innerHTML = decodedHtml;
 
         const form = editMode.querySelector('.edit-question-form');
         const typeSelect = form.querySelector('.question-type-select');
@@ -447,6 +460,11 @@ require_once ROOT_PATH . '/app/views/partials/admin_sidebar.php';
     .btn-icon { background: none; border: none; cursor: pointer; color: #6c757d; padding: 5px; }
     .btn-icon:hover { color: #212529; }
     /* Quill Overrides */
+    .quill-editor {
+        min-height: 160px;
+        resize: vertical;
+        overflow: auto;
+    }
     .ql-container { font-family: 'Roboto', sans-serif; font-size: 16px; }
-    .ql-editor { min-height: 100px; }
+    .ql-editor { min-height: 160px; }
 </style>

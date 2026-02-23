@@ -30,3 +30,12 @@ foreach ($lines as $line) {
     $_ENV[$name] = $value;
     $_SERVER[$name] = $value;
 }
+
+// Base URL convenience constant for scripts that rely on it.  Defined here once.
+if (!defined('BASE_URL')) {
+    $appUrl = getenv('APP_URL');
+    // ensure there's no trailing slash
+    $appUrl = rtrim($appUrl, '/');
+    define('BASE_URL', $appUrl);
+}
+date_default_timezone_set('Asia/Kolkata');

@@ -1,0 +1,110 @@
+<?php
+if (!defined('ROOT_PATH')) {
+    define('ROOT_PATH', dirname(__DIR__, 2));
+    require_once ROOT_PATH . '/config/app.php';
+}
+
+require_once ROOT_PATH . '/config/database.php';
+require_once ROOT_PATH . '/app/models/ExamAssignment.php';
+
+// --- 1. Security Check ---
+$headers = getallheaders();
+$api_key = isset($headers['X-API-KEY']) ? $headers['X-API-KEY'] : '';
+$valid_key = getenv('EXAM_API_KEY');
+
+if (empty($api_key) || $api_key !== $valid_key) {
+    http_response_code(401);
+    echo json_encode(['status' => 'error', 'message' => 'Unauthorized: Invalid API Key']);
+    exit();
+}
+
+// --- 2. Parse Input ---
+$input = json_decode(file_get_contents('php://input'), true);
+
+$name = isset($input['name']) ? trim($input['name']) : '';
+$email = isset($input['email']) ? trim($input['email']) : '';
+$phone = isset($input['phone']) ? trim($input['phone']) : '';
+$exam_id = isset($input['exam_id']) ? (int)$input['exam_id'] : 0;
+
+if (empty($email) || empty($name) || $exam_id <= 0) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Missing required fields: name, email, exam_id']);
+    exit();
+}
+
+// --- 3. Create or Update User ---
+$user_id = 0;
+$sql_check = "SELECT id FROM users WHERE email = ?";
+$stmt_check = mysqli_prepare($conn, $sql_check);
+mysqli_stmt_bind_param($stmt_check, "s", $email);
+mysqli_stmt_execute($stmt_check);
+$result_check = mysqli_stmt_get_result($stmt_check);
+
+if ($row = mysqli_fetch_assoc($result_check)) {
+    $user_id = $row['id'];
+    // Update name/phone if provided
+    // Note: Ensure 'mobile_number' column exists, otherwise remove it from query
+    // Assuming mobile_number exists or ignoring it for safety if not sure.
+    // Let's stick to updating name for now to be safe.
+    $sql_update = "UPDATE users SET name = ? WHERE id = ?";
+    $stmt_update = mysqli_prepare($conn, $sql_update);
+    mysqli_stmt_bind_param($stmt_update, "si", $name, $user_id);
+    mysqli_stmt_execute($stmt_update);
+    mysqli_stmt_close($stmt_update);
+} else {
+    // Create new user
+    $sql_create = "INSERT INTO users (name, email) VALUES (?, ?)";
+    $stmt_create = mysqli_prepare($conn, $sql_create);
+    mysqli_stmt_bind_param($stmt_create, "ss", $name, $email);
+    if (mysqli_stmt_execute($stmt_create)) {
+        $user_id = mysqli_insert_id($conn);
+    } else {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Failed to create user']);
+        exit();
+    }
+    mysqli_stmt_close($stmt_create);
+}
+mysqli_stmt_close($stmt_check);
+
+// --- 4. Assign Exam ---
+// Check if already assigned
+$sql_assign_check = "SELECT assignment_id FROM exam_assignments WHERE exam_id = ? AND candidate_email = ?";
+$stmt_assign_check = mysqli_prepare($conn, $sql_assign_check);
+mysqli_stmt_bind_param($stmt_assign_check, "is", $exam_id, $email);
+mysqli_stmt_execute($stmt_assign_check);
+mysqli_stmt_store_result($stmt_assign_check);
+
+if (mysqli_stmt_num_rows($stmt_assign_check) == 0) {
+    // FIXED: Changed 'interview_portal' to 'interview' to match ENUM
+    $sql_assign = "INSERT INTO exam_assignments (exam_id, candidate_id, candidate_email, candidate_source, status) VALUES (?, ?, ?, 'interview', 'assigned')";
+    $stmt_assign = mysqli_prepare($conn, $sql_assign);
+    mysqli_stmt_bind_param($stmt_assign, "iis", $exam_id, $user_id, $email);
+    mysqli_stmt_execute($stmt_assign);
+    mysqli_stmt_close($stmt_assign);
+}
+mysqli_stmt_close($stmt_assign_check);
+
+// --- 5. Generate Link & Send Email ---
+$exam_link = BASE_URL . "/exam/check/" . $exam_id . "?email=" . urlencode($email);
+
+$subject = "Your Interview Exam Link";
+$message = "Hello $name,\n\n";
+$message .= "You have been assigned an exam as part of your interview process.\n";
+$message .= "Please click the link below to start:\n\n";
+$message .= $exam_link . "\n\n";
+$message .= "Good luck!\nTravarsa Team";
+$headers_mail = "From: no-reply@exam.travarsa.net";
+
+// Uncomment to enable sending
+// mail($email, $subject, $message, $headers_mail);
+
+// --- 6. Response ---
+echo json_encode([
+    'status' => 'success',
+    'message' => 'Exam assigned successfully',
+    'exam_link' => $exam_link
+]);
+
+mysqli_close($conn);
+exit();

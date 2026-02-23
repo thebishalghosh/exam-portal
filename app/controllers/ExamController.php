@@ -20,22 +20,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_exam'])) {
     $duration = (int)$_POST['duration'];
     $start_time = $_POST['start_time'];
     $end_time = $_POST['end_time'];
-
-    // Check for open registration flag (checkbox)
-    $is_open_registration = isset($_POST['is_open_registration']) ? 1 : 0;
+    $exam_type = $_POST['exam_type']; // New field
 
     // Basic validation
-    if (empty($title) || $duration <= 0 || empty($start_time) || empty($end_time)) {
+    if (empty($title) || $duration <= 0 || empty($start_time) || empty($end_time) || empty($exam_type)) {
         header("Location: " . BASE_URL . "/admin/exams?error=missing_fields");
         exit();
     }
 
     // Prepare and bind
-    $sql = "INSERT INTO exams (title, description, duration, start_time, end_time, is_open_registration) VALUES (?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO exams (title, description, duration, start_time, end_time, exam_type) VALUES (?, ?, ?, ?, ?, ?)";
     $stmt = mysqli_prepare($conn, $sql);
 
     if ($stmt) {
-        mysqli_stmt_bind_param($stmt, "ssissi", $title, $description, $duration, $start_time, $end_time, $is_open_registration);
+        mysqli_stmt_bind_param($stmt, "ssisss", $title, $description, $duration, $start_time, $end_time, $exam_type);
 
         if (mysqli_stmt_execute($stmt)) {
             header("Location: " . BASE_URL . "/admin/exams?success=created");

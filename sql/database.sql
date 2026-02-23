@@ -103,10 +103,9 @@ CREATE TABLE exam_assignments (
 ALTER TABLE submissions ADD COLUMN marks_breakdown JSON DEFAULT NULL AFTER submitted_answers;
 
 
-
--- Add is_open_registration column to exams table
+-- Add exam_type column to exams table
 ALTER TABLE exams
-    ADD COLUMN is_open_registration BOOLEAN DEFAULT FALSE AFTER status;
+    ADD COLUMN exam_type ENUM('open', 'interview', 'internal') NOT NULL DEFAULT 'internal' AFTER status;
 
 -- Add 'open_registration' to the ENUM for candidate_source in exam_assignments
 -- Note: This might require a temporary table or direct ALTER depending on MySQL version and existing data.
@@ -124,3 +123,8 @@ ALTER TABLE exam_assignments
 
 ALTER TABLE users ADD COLUMN roll_number VARCHAR(255) DEFAULT NULL;
 ALTER TABLE users ADD COLUMN college_name VARCHAR(255) DEFAULT NULL;
+
+-- Add columns for Magic Link functionality to users table
+ALTER TABLE users
+    ADD COLUMN magic_link_token VARCHAR(255) NULL DEFAULT NULL UNIQUE,
+    ADD COLUMN magic_link_expiry DATETIME NULL DEFAULT NULL;

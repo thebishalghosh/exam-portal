@@ -145,3 +145,86 @@ function fetchCandidatesFromInterview($search = '') {
         return $candidate;
     }, $all_candidates);
 }
+
+
+/**
+ * Notify the interview portal about an exam status/score update.
+ *
+ * The remote webhook endpoint expects a JSON POST with at least:
+ *   - email
+ *   - status
+ *   - exam_title
+ *   - score
+ *   - score_type
+ *   - webhook_key (shared secret)
+ *
+ * We always include these fields in the payload we send.
+ *
+ * @param string      $email       Candidate email address.
+ * @param int         $exam_id     Exam identifier (internal value).
+ * @param string      $status      e.g. 'completed', 'graded', 'disqualified'.
+ * @param float|null  $score       Optional numeric score.
+ * @param string|null $exam_title  Human-readable title of the exam.
+ * @param string|null $score_type  e.g. 'auto', 'manual', 'final'.
+ * @return bool True if the remote call returned HTTP 200, false otherwise.
+ */
+function reportExamResultToInterview($email, $exam_id, $status, $score = null, $exam_title = null, $score_type = null) {
+    // Prefer dedicated exam status URL; fall back to generic interview API URL if not set.
+    $url = getenv('INTERVIEW_EXAM_STATUS_URL');
+    if (empty($url)) {
+        $url = getenv('INTERVIEW_API_URL');
+    }
+
+    // Use the shared exam webhook key; fall back to older interview key if needed.
+    $api_key = getenv('EXAM_API_KEY');
+    if (empty($api_key)) {
+        $api_key = getenv('INTERVIEW_API_KEY');
+    }
+
+    if (empty($url) || empty($api_key)) {
+        error_log("Cannot report result: INTERVIEW_API_URL or INTERVIEW_API_KEY not configured.");
+        return false;
+    }
+
+    // Normalise status for the webhook (the DB can still use its own casing/values)
+    $status_for_webhook = strtolower(trim($status));
+
+    // Always include the fields the remote portal expects.
+    // Also include exam_id as an extra convenience field.
+    $payload = [
+        'email'       => $email,
+        'status'      => $status_for_webhook,
+        'exam_title'  => $exam_title !== null ? $exam_title : '',
+        'score'       => $score !== null ? (float)$score : null,
+        'score_type'  => $score_type !== null ? $score_type : null,
+        'webhook_key' => $api_key,
+        'exam_id'     => $exam_id,
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        // send shared key in header as well as body
+        'X-API-KEY: ' . $api_key,
+    ]);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    if (curl_errno($ch)) {
+        error_log("Error reporting interview result: " . curl_error($ch));
+    }
+    curl_close($ch);
+
+    if ($http_code !== 200) {
+        error_log("Interview API returned HTTP " . $http_code . ": " . $response);
+        return false;
+    }
+    return true;
+}

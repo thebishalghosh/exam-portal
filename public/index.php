@@ -17,7 +17,9 @@ if (getenv('APP_DEBUG') === 'true') {
 }
 
 // --- Base URL ---
-define('BASE_URL', getenv('APP_URL'));
+// BASE_URL is now defined in config/app.php, which was already loaded above.
+// It is safe to rely on that global constant here.
+
 
 // --- Routing Logic ---
 $request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -72,7 +74,9 @@ $routes = [
     'register/open-exam'  => '/app/controllers/OpenRegistrationController.php',
     'exams/open'          => '/public/exams/open.php',
     'api/get-candidates'  => '/public/api/get-candidates.php',
+    'interviews'           => '/public/interviews.php',
     'api/save-entry-photo' => '/app/controllers/EntryPhotoController.php',
+    'api/webhook/assign-exam' => '/app/controllers/WebhookController.php', // New Webhook Route
 ];
 
 // Check static routes first
