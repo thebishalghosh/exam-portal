@@ -9,6 +9,9 @@ require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/app/models/User.php';
 require_once ROOT_PATH . '/app/services/EmailService.php';
 
+// Always return JSON from this webhook
+header('Content-Type: application/json');
+
 class InterviewController {
 
     private $conn;
@@ -31,8 +34,28 @@ class InterviewController {
         );
 
         // --- 1. API Key Validation ---
-        $headers = getallheaders();
-        $provided_key = $headers['X-API-KEY'] ?? '';
+        // Fetch headers in a way that works on both Apache and FPM, and be tolerant of casing.
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+        } else {
+            $headers = [];
+            foreach ($_SERVER as $name => $value) {
+                if (strpos($name, 'HTTP_') === 0) {
+                    $key = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))));
+                    $headers[$key] = $value;
+                }
+            }
+        }
+
+        $provided_key = '';
+        if (isset($headers['X-API-KEY'])) {
+            $provided_key = $headers['X-API-KEY'];
+        } elseif (isset($headers['x-api-key'])) {
+            $provided_key = $headers['x-api-key'];
+        } elseif (isset($headers['X-Api-Key'])) {
+            $provided_key = $headers['X-Api-Key'];
+        }
+
         $expected_key = getenv('INTERVIEW_API_KEY');
 
         if (!$provided_key || $provided_key !== $expected_key) {
@@ -115,30 +138,46 @@ class InterviewController {
 
         $sql = "SELECT id FROM users WHERE email = ?";
         $stmt = mysqli_prepare($this->conn, $sql);
+        if (!$stmt) {
+            return false;
+        }
+
         mysqli_stmt_bind_param($stmt, "s", $email);
         mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
 
-        if ($row = mysqli_fetch_assoc($result)) {
+        // Use bind_result / fetch instead of mysqli_stmt_get_result for maximum compatibility
+        mysqli_stmt_bind_result($stmt, $existing_id);
 
-            $user_id = $row['id'];
+        if (mysqli_stmt_fetch($stmt)) {
+            $user_id = (int)$existing_id;
+            mysqli_stmt_close($stmt);
 
             $update = "UPDATE users SET name = ? WHERE id = ?";
             $stmt2 = mysqli_prepare($this->conn, $update);
-            mysqli_stmt_bind_param($stmt2, "si", $name, $user_id);
-            mysqli_stmt_execute($stmt2);
+            if ($stmt2) {
+                mysqli_stmt_bind_param($stmt2, "si", $name, $user_id);
+                mysqli_stmt_execute($stmt2);
+                mysqli_stmt_close($stmt2);
+            }
 
             return $user_id;
 
         } else {
+            mysqli_stmt_close($stmt);
 
             $insert = "INSERT INTO users (name, email) VALUES (?, ?)";
             $stmt3 = mysqli_prepare($this->conn, $insert);
+            if (!$stmt3) {
+                return false;
+            }
             mysqli_stmt_bind_param($stmt3, "ss", $name, $email);
 
             if (mysqli_stmt_execute($stmt3)) {
-                return mysqli_insert_id($this->conn);
+                $new_id = mysqli_insert_id($this->conn);
+                mysqli_stmt_close($stmt3);
+                return $new_id;
             }
+            mysqli_stmt_close($stmt3);
         }
 
         return false;
