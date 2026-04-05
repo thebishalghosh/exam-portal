@@ -103,7 +103,21 @@ $total_pages = ceil($total_exams / $limit);
                                             data-status="<?php echo ucfirst($exam['status']); ?>">
                                         View
                                     </button>
+                                    <button type="button" class="btn btn-sm btn-warning edit-exam-btn"
+                                            data-bs-toggle="modal" data-bs-target="#editExamModal"
+                                            data-id="<?php echo $exam['exam_id']; ?>"
+                                            data-title="<?php echo htmlspecialchars($exam['title']); ?>"
+                                            data-description="<?php echo htmlspecialchars($exam['description']); ?>"
+                                            data-duration="<?php echo $exam['duration']; ?>"
+                                            data-start="<?php echo date('Y-m-d\TH:i', strtotime($exam['start_time'])); ?>"
+                                            data-end="<?php echo date('Y-m-d\TH:i', strtotime($exam['end_time'])); ?>"
+                                            data-type="<?php echo $exam['exam_type']; ?>"
+                                            data-status="<?php echo $exam['status']; ?>">
+                                        Edit
+                                    </button>
+                                    <?php if ($exam['exam_type'] == 'internal'): ?>
                                     <a href="<?php echo BASE_URL; ?>/admin/exam/assign/<?php echo $exam['exam_id']; ?>" class="btn btn-sm btn-secondary">Assign</a>
+                                    <?php endif; ?>
                                     <a href="<?php echo BASE_URL; ?>/admin/exam/questions/<?php echo $exam['exam_id']; ?>" class="btn btn-sm btn-primary" style="background-color: var(--primary-green); border-color: var(--primary-green);">Manage Questions</a>
                                     <button type="button" class="btn btn-sm btn-danger delete-exam-btn"
                                             data-bs-toggle="modal" data-bs-target="#deleteExamModal"
@@ -203,6 +217,69 @@ $total_pages = ceil($total_exams / $limit);
     </div>
 </div>
 
+<!-- Edit Exam Modal -->
+<div class="modal fade" id="editExamModal" tabindex="-1" aria-labelledby="editExamModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editExamModalLabel">Edit Exam</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editExamForm" action="<?php echo BASE_URL; ?>/admin/exam/update" method="POST">
+                    <input type="hidden" name="exam_id" id="edit_exam_id">
+                    <input type="hidden" name="update_exam" value="1">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_title" class="form-label">Exam Title</label>
+                            <input type="text" class="form-control" id="edit_title" name="title" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_duration" class="form-label">Duration (in minutes)</label>
+                            <input type="number" class="form-control" id="edit_duration" name="duration" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_start_time" class="form-label">Start Time</label>
+                            <input type="datetime-local" class="form-control" id="edit_start_time" name="start_time" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_end_time" class="form-label">End Time</label>
+                            <input type="datetime-local" class="form-control" id="edit_end_time" name="end_time" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_exam_type" class="form-label">Exam Type</label>
+                            <select class="form-select" id="edit_exam_type" name="exam_type" required>
+                                <option value="internal">Internal</option>
+                                <option value="open">Open</option>
+                                <option value="interview">Interview</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_status" class="form-label">Status</label>
+                            <select class="form-select" id="edit_status" name="status" required>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" form="editExamForm" class="btn btn-primary" style="background-color: var(--primary-green); border-color: var(--primary-green);">Update Exam</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- View Exam Modal -->
 <div class="modal fade" id="viewExamModal" tabindex="-1" aria-labelledby="viewExamModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -282,6 +359,22 @@ document.addEventListener('DOMContentLoaded', function () {
             viewExamModal.querySelector('#modal-start').textContent = start;
             viewExamModal.querySelector('#modal-end').textContent = end;
             viewExamModal.querySelector('#modal-status').textContent = status;
+        });
+    }
+
+    var editExamModal = document.getElementById('editExamModal');
+    if(editExamModal) {
+        editExamModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+
+            editExamModal.querySelector('#edit_exam_id').value = button.getAttribute('data-id');
+            editExamModal.querySelector('#edit_title').value = button.getAttribute('data-title');
+            editExamModal.querySelector('#edit_description').value = button.getAttribute('data-description');
+            editExamModal.querySelector('#edit_duration').value = button.getAttribute('data-duration');
+            editExamModal.querySelector('#edit_start_time').value = button.getAttribute('data-start');
+            editExamModal.querySelector('#edit_end_time').value = button.getAttribute('data-end');
+            editExamModal.querySelector('#edit_exam_type').value = button.getAttribute('data-type');
+            editExamModal.querySelector('#edit_status').value = button.getAttribute('data-status');
         });
     }
 

@@ -59,6 +59,7 @@ $routes = [
     'login/process'       => '/app/controllers/LoginController.php',
     'logout'              => '/app/controllers/LogoutController.php',
     'admin/exam/create'   => '/app/controllers/ExamController.php',
+    'admin/exam/update'   => '/app/controllers/ExamController.php',
     'admin/exam/delete'   => '/app/controllers/ExamController.php',
     'admin/question/create' => '/app/controllers/QuestionController.php',
     'admin/question/delete' => '/app/controllers/QuestionController.php',
