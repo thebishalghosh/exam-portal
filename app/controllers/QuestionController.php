@@ -17,6 +17,59 @@ if (!isset($_SESSION['admin_id'])) {
     exit();
 }
 
+// Handle Import Questions Request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file']) && isset($_POST['exam_id'])) {
+    $exam_id = (int)$_POST['exam_id'];
+    $file = $_FILES['csv_file'];
+
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        // Handle error (redirect back with message)
+        header("Location: " . BASE_URL . "/admin/exams?error=upload_failed");
+        exit();
+    }
+
+    $handle = fopen($file['tmp_name'], 'r');
+    if ($handle !== FALSE) {
+        $header = fgetcsv($handle); // skip header
+        $successCount = 0;
+
+        while (($data = fgetcsv($handle)) !== FALSE) {
+            // Assuming format: type, question_text, marks, options, correct_answer
+            if (count($data) >= 3) {
+                $type = trim($data[0]);
+                $question_text = trim($data[1]);
+                $marks = (int)trim($data[2]);
+                $options = isset($data[3]) ? trim($data[3]) : null;
+                $correct_answer = isset($data[4]) ? trim($data[4]) : null;
+
+                if (empty($question_text) || $marks <= 0) continue;
+
+                if ($type === 'mcq') {
+                    if (empty($options) || empty($correct_answer)) continue;
+                    $sql = "INSERT INTO questions (exam_id, type, question_text, options, correct_answer, marks) VALUES (?, ?, ?, ?, ?, ?)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "issssi", $exam_id, $type, $question_text, $options, $correct_answer, $marks);
+                } else {
+                    $sql = "INSERT INTO questions (exam_id, type, question_text, marks) VALUES (?, ?, ?, ?)";
+                    $stmt = mysqli_prepare($conn, $sql);
+                    mysqli_stmt_bind_param($stmt, "issi", $exam_id, $type, $question_text, $marks);
+                }
+
+                if ($stmt && mysqli_stmt_execute($stmt)) {
+                    $successCount++;
+                }
+                if ($stmt) mysqli_stmt_close($stmt);
+            }
+        }
+        fclose($handle);
+        header("Location: " . BASE_URL . "/admin/exams?success=imported_" . $successCount);
+    } else {
+        header("Location: " . BASE_URL . "/admin/exams?error=file_read_failed");
+    }
+    mysqli_close($conn);
+    exit();
+}
+
 // Handle Create Question Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_question'])) {
     header('Content-Type: application/json');

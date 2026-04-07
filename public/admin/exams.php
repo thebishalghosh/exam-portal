@@ -119,6 +119,11 @@ $total_pages = ceil($total_exams / $limit);
                                     <a href="<?php echo BASE_URL; ?>/admin/exam/assign/<?php echo $exam['exam_id']; ?>" class="btn btn-sm btn-secondary">Assign</a>
                                     <?php endif; ?>
                                     <a href="<?php echo BASE_URL; ?>/admin/exam/questions/<?php echo $exam['exam_id']; ?>" class="btn btn-sm btn-primary" style="background-color: var(--primary-green); border-color: var(--primary-green);">Manage Questions</a>
+                                    <button type="button" class="btn btn-sm btn-success import-questions-btn"
+                                            data-bs-toggle="modal" data-bs-target="#importQuestionsModal"
+                                            data-exam-id="<?php echo $exam['exam_id']; ?>">
+                                        Import
+                                    </button>
                                     <button type="button" class="btn btn-sm btn-danger delete-exam-btn"
                                             data-bs-toggle="modal" data-bs-target="#deleteExamModal"
                                             data-exam-id="<?php echo $exam['exam_id']; ?>"
@@ -334,6 +339,40 @@ $total_pages = ceil($total_exams / $limit);
     </div>
 </div>
 
+<!-- Import Questions Modal -->
+<div class="modal fade" id="importQuestionsModal" tabindex="-1" aria-labelledby="importQuestionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importQuestionsModalLabel">Import Questions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="importQuestionsForm" action="<?php echo BASE_URL; ?>/admin/question/import" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="exam_id" id="import_exam_id">
+                    <div class="mb-3">
+                        <label for="csv_file" class="form-label">Select CSV file</label>
+                        <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv" required>
+                    </div>
+                    <p class="text-muted">
+                        <small>
+                            <strong>CSV Format:</strong><br>
+                            The CSV file should have the following columns: `type`, `question_text`, `marks`, `options`, `correct_answer`.<br>
+                            - `type`: `mcq` or `descriptive`<br>
+                            - `options`: For `mcq` type, a JSON string like `{"A": "Option 1", "B": "Option 2"}`.<br>
+                            - `correct_answer`: For `mcq` type, the key of the correct option (e.g., `A`).
+                        </small>
+                    </p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="importQuestionsForm" class="btn btn-primary">Import</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php
 mysqli_close($conn);
 require_once ROOT_PATH . '/app/views/partials/admin_footer.php';
@@ -387,6 +426,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
             deleteExamModal.querySelector('#delete-exam-id').value = examId;
             deleteExamModal.querySelector('#delete-exam-title').textContent = examTitle;
+        });
+    }
+
+    var importQuestionsModal = document.getElementById('importQuestionsModal');
+    if(importQuestionsModal) {
+        importQuestionsModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var examId = button.getAttribute('data-exam-id');
+            importQuestionsModal.querySelector('#import_exam_id').value = examId;
         });
     }
 

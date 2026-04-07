@@ -64,6 +64,7 @@ $routes = [
     'admin/question/create' => '/app/controllers/QuestionController.php',
     'admin/question/delete' => '/app/controllers/QuestionController.php',
     'admin/question/update' => '/app/controllers/QuestionController.php',
+    'admin/question/import' => '/app/controllers/QuestionController.php',
     'admin/exam/save-assignment' => '/app/controllers/ExamAssignmentController.php',
     'admin/submission/save-grade' => '/app/controllers/SubmissionController.php',
     'api/submit-exam'     => '/app/controllers/SubmissionController.php',
