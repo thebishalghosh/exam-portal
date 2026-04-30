@@ -3,7 +3,9 @@
 header('Content-Type: application/json');
 
 // Define ROOT_PATH for includes
-define('ROOT_PATH', dirname(__DIR__, 2));
+if (!defined('ROOT_PATH')) {
+    define('ROOT_PATH', dirname(__DIR__, 2));
+}
 
 // Load environment variables and database connection
 require_once ROOT_PATH . '/config/app.php';
